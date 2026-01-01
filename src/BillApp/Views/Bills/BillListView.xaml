@@ -6,15 +6,301 @@
              xmlns:vm="clr-namespace:BillApp.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:BillListViewModel}"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="600" d:DesignWidth="900">
+
     <Grid Margin="20">
-        <StackPanel>
-            <TextBlock Text="{Binding Title}"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"/>
-            <TextBlock Text="Bill management coming soon..."
-                       Foreground="Gray"/>
-        </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock Text="Bills" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button Content="+ Add Bill"
+                    Command="{Binding AddBillCommand}"
+                    HorizontalAlignment="Right"
+                    Padding="15,8"
+                    Background="#0078D4"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand"/>
+        </DockPanel>
+
+        <!-- Filters -->
+        <Border Grid.Row="1" Background="#F5F5F5" Padding="15" Margin="0,0,0,15" CornerRadius="4">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                         Width="200"
+                         Padding="8"
+                         VerticalContentAlignment="Center">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <VisualBrush Stretch="None" AlignmentX="Left">
+                                                <VisualBrush.Visual>
+                                                    <TextBlock Text="Search payee..." Foreground="Gray" Margin="8,0,0,0"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+
+                <ComboBox ItemsSource="{Binding StatusOptions}"
+                          SelectedItem="{Binding FilterStatus}"
+                          Width="120"
+                          Margin="10,0,0,0"
+                          Padding="8">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <ComboBox ItemsSource="{Binding Categories}"
+                          SelectedValue="{Binding FilterCategoryId}"
+                          SelectedValuePath="Id"
+                          DisplayMemberPath="Name"
+                          Width="150"
+                          Margin="10,0,0,0"
+                          Padding="8"/>
+
+                <Button Content="Apply"
+                        Command="{Binding ApplyFilterCommand}"
+                        Margin="10,0,0,0"
+                        Padding="15,8"/>
+
+                <Button Content="Clear"
+                        Command="{Binding ClearFilterCommand}"
+                        Margin="5,0,0,0"
+                        Padding="15,8"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Bills DataGrid -->
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding Bills}"
+                  SelectedItem="{Binding SelectedBill}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="False"
+                  SelectionMode="Single"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  BorderThickness="1"
+                  BorderBrush="#E0E0E0"
+                  CellEditEnding="DataGrid_CellEditEnding">
+
+            <DataGrid.Columns>
+                <!-- Payee -->
+                <DataGridTextColumn Header="Payee" Binding="{Binding Payee, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="120"/>
+
+                <!-- Amount Due -->
+                <DataGridTextColumn Header="Due" Binding="{Binding AmountDue, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Amount Paid -->
+                <DataGridTextColumn Header="Paid" Binding="{Binding AmountPaid, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                            <Setter Property="Foreground" Value="#4CAF50"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Balance -->
+                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Due Date -->
+                <DataGridTemplateColumn Header="Due Date" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DueDate, StringFormat=d}" Padding="5,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <DatePicker SelectedDate="{Binding DueDate, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Category -->
+                <DataGridTemplateColumn Header="Category" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Category.Name}" Padding="5,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding DataContext.Categories, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      SelectedValue="{Binding CategoryId, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="Name"
+                                      Padding="5"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Status with color coding -->
+                <DataGridTemplateColumn Header="Status" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Padding="5,2" CornerRadius="3" HorizontalAlignment="Left">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#E0E0E0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Status}" Value="Paid">
+                                                <Setter Property="Background" Value="#C8E6C9"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                <Setter Property="Background" Value="#FFF9C4"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Overdue">
+                                                <Setter Property="Background" Value="#FFCDD2"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                <Setter Property="Background" Value="#FFCDD2"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding Status}" FontSize="12"/>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding DataContext.StatusOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      SelectedItem="{Binding Status, UpdateSourceTrigger=PropertyChanged}"
+                                      Padding="5"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Frequency -->
+                <DataGridTemplateColumn Header="Frequency" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Frequency}" Padding="5,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding DataContext.FrequencyOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      SelectedItem="{Binding Frequency, UpdateSourceTrigger=PropertyChanged}"
+                                      Padding="5"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Actions -->
+                <DataGridTemplateColumn Header="Actions" Width="180">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Edit"
+                                        Command="{Binding DataContext.EditBillCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Padding="8,4"
+                                        Margin="0,0,5,0"
+                                        Cursor="Hand"/>
+
+                                <Button Content="Paid"
+                                        Command="{Binding DataContext.MarkAsPaidCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Padding="8,4"
+                                        Margin="0,0,5,0"
+                                        Background="#4CAF50"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Visibility="{Binding Status, Converter={StaticResource PaidVisibilityConverter}}"/>
+
+                                <Button Content="Delete"
+                                        Command="{Binding DataContext.DeleteBillCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Padding="8,4"
+                                        Foreground="#F44336"
+                                        Cursor="Hand"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                            <Setter Property="Background" Value="#FFF3E0"/>
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E3F2FD"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <!-- Loading indicator -->
+        <Border Grid.Row="2"
+                Background="#80FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Loading..."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="16"/>
+        </Border>
+
+        <!-- Empty state -->
+        <TextBlock Grid.Row="2"
+                   Text="No bills found. Click '+ Add Bill' to create your first bill."
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Foreground="Gray"
+                   FontSize="14">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Bills.Count}" Value="0"/>
+                                <Condition Binding="{Binding IsLoading}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
     </Grid>
 </UserControl>

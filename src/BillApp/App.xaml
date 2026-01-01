@@ -9,13 +9,22 @@
              xmlns:budgetViews="clr-namespace:BillApp.Views.Budgets"
              xmlns:secureViews="clr-namespace:BillApp.Views.SecureNotes"
              xmlns:reportViews="clr-namespace:BillApp.Views.Reports"
-             xmlns:settingViews="clr-namespace:BillApp.Views.Settings">
+             xmlns:settingViews="clr-namespace:BillApp.Views.Settings"
+             xmlns:converters="clr-namespace:BillApp.Converters">
     <!--
     Note: No StartupUri - we handle startup manually in App.xaml.cs
     This allows us to use DI to create the MainWindow
     -->
     <Application.Resources>
         <ResourceDictionary>
+            <!--
+            Value Converters (like Angular pipes)
+            These convert data types for display in XAML bindings
+            -->
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:PaymentStatusToVisibilityConverter x:Key="PaidVisibilityConverter"/>
+
             <!--
             DataTemplates map ViewModels to Views
             Similar to Angular route configuration where you map paths to components
@@ -27,6 +36,10 @@
 
             <DataTemplate DataType="{x:Type vm:BillListViewModel}">
                 <billViews:BillListView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:BillEditViewModel}">
+                <billViews:BillEditView/>
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type vm:AccountListViewModel}">

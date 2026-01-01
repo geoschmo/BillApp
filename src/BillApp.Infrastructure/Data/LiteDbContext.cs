@@ -1,3 +1,4 @@
+using BillApp.Core.Models;
 using LiteDB;
 
 namespace BillApp.Infrastructure.Data;
@@ -11,6 +12,17 @@ public class LiteDbContext : IDisposable
     private readonly string _connectionString;
     private LiteDatabase? _database;
     private bool _disposed;
+
+    static LiteDbContext()
+    {
+        // Configure LiteDB to ignore navigation/computed properties
+        // These are loaded separately, not stored in the database
+        BsonMapper.Global.Entity<Bill>()
+            .Ignore(x => x.Category)
+            .Ignore(x => x.IsOverdue)
+            .Ignore(x => x.DaysUntilDue)
+            .Ignore(x => x.IsRecurring);
+    }
 
     public LiteDbContext(string? databasePath = null)
     {

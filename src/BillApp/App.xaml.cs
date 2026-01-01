@@ -1,4 +1,7 @@
 using System.Windows;
+using BillApp.Core.Interfaces.Repositories;
+using BillApp.Infrastructure.Data;
+using BillApp.Infrastructure.Repositories;
 using BillApp.Services;
 using BillApp.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,13 +26,22 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // Register services (singleton = same instance everywhere)
+        // Database context (singleton - one connection for the app)
+        services.AddSingleton<LiteDbContext>();
+        services.AddSingleton<DatabaseInitializer>();
+
+        // Repositories (transient - new instance each time, shares DbContext)
+        services.AddTransient<IBillRepository, BillRepository>();
+        services.AddTransient<ICategoryRepository, CategoryRepository>();
+
+        // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();
 
-        // Register ViewModels (transient = new instance each time)
+        // ViewModels (transient = new instance each time)
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<BillListViewModel>();
+        services.AddTransient<BillEditViewModel>();
         services.AddTransient<AccountListViewModel>();
         services.AddTransient<BudgetViewModel>();
         services.AddTransient<SecureNotesViewModel>();
@@ -44,6 +56,10 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Initialize database with default data
+        var dbInitializer = _serviceProvider.GetRequiredService<DatabaseInitializer>();
+        dbInitializer.SeedDefaultCategories();
+
         // Get MainWindow from DI container
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
@@ -54,5 +70,15 @@ public partial class App : Application
         await viewModel.InitializeAsync();
 
         mainWindow.Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        // Dispose the database context when the app exits
+        if (_serviceProvider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+        base.OnExit(e);
     }
 }
