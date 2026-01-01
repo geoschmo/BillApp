@@ -1,0 +1,113 @@
+<Window x:Class="BillApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:BillApp.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
+        Title="BillApp - Personal Finance Manager"
+        Height="700" Width="1100"
+        MinHeight="500" MinWidth="800"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Navigation button style -->
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderThickness="3,0,0,0"
+                                BorderBrush="Transparent"
+                                x:Name="border">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E8E8E8"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#D0D0D0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Sidebar navigation -->
+            <ColumnDefinition Width="200"/>
+            <!-- Main content area -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Navigation Sidebar -->
+        <Border Grid.Column="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!-- App Title -->
+                <Border DockPanel.Dock="Top" Padding="15" Background="#0078D4">
+                    <TextBlock Text="BillApp"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="White"/>
+                </Border>
+
+                <!-- Navigation Buttons -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                    <Button Content="Dashboard"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToDashboardCommand}"/>
+
+                    <Button Content="Bills"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToBillsCommand}"/>
+
+                    <Button Content="Accounts"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToAccountsCommand}"/>
+
+                    <Button Content="Budget"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToBudgetCommand}"/>
+
+                    <Button Content="Secure Notes"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToSecureNotesCommand}"/>
+
+                    <Button Content="Reports"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToReportsCommand}"/>
+                </StackPanel>
+
+                <!-- Settings at bottom -->
+                <Button Content="Settings"
+                        Style="{StaticResource NavButtonStyle}"
+                        Command="{Binding NavigateToSettingsCommand}"
+                        VerticalAlignment="Bottom"
+                        DockPanel.Dock="Bottom"
+                        Margin="0,0,0,10"/>
+            </DockPanel>
+        </Border>
+
+        <!--
+        Main Content Area (like Angular's router-outlet)
+        ContentControl displays the View for the current ViewModel
+        WPF uses the DataTemplates defined in App.xaml to select the correct View
+        -->
+        <ContentControl Grid.Column="1"
+                        Content="{Binding CurrentView}"/>
+    </Grid>
+</Window>

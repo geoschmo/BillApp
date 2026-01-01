@@ -1,0 +1,38 @@
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.cache
+
+# NuGet
+*.nupkg
+packages/
+
+# IDE
+.idea/
+*.sln.iml
+
+# Sensitive data - NEVER commit these
+*.key
+*.billbackup
+appsettings.*.json
+!appsettings.json
+
+# Database files
+*.db
+*.db-journal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

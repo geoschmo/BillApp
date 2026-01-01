@@ -1,0 +1,53 @@
+<Application x:Class="BillApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:BillApp"
+             xmlns:vm="clr-namespace:BillApp.ViewModels"
+             xmlns:views="clr-namespace:BillApp.Views"
+             xmlns:billViews="clr-namespace:BillApp.Views.Bills"
+             xmlns:accountViews="clr-namespace:BillApp.Views.Accounts"
+             xmlns:budgetViews="clr-namespace:BillApp.Views.Budgets"
+             xmlns:secureViews="clr-namespace:BillApp.Views.SecureNotes"
+             xmlns:reportViews="clr-namespace:BillApp.Views.Reports"
+             xmlns:settingViews="clr-namespace:BillApp.Views.Settings">
+    <!--
+    Note: No StartupUri - we handle startup manually in App.xaml.cs
+    This allows us to use DI to create the MainWindow
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <!--
+            DataTemplates map ViewModels to Views
+            Similar to Angular route configuration where you map paths to components
+            When WPF encounters a ViewModel, it automatically creates the corresponding View
+            -->
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                <views:DashboardView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:BillListViewModel}">
+                <billViews:BillListView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:AccountListViewModel}">
+                <accountViews:AccountListView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:BudgetViewModel}">
+                <budgetViews:BudgetView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:SecureNotesViewModel}">
+                <secureViews:SecureNotesView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+                <reportViews:ReportsView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <settingViews:SettingsView/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
