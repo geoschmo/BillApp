@@ -18,6 +18,11 @@ public partial class App : Application
 {
     private readonly IServiceProvider _serviceProvider;
 
+    /// <summary>
+    /// Gets the application's service provider for resolving dependencies.
+    /// </summary>
+    public static IServiceProvider Services => ((App)Current)._serviceProvider;
+
     public App()
     {
         // Build DI container (like Angular's dependency injection)
@@ -46,9 +51,11 @@ public partial class App : Application
         // Repositories (transient - new instance each time, shares DbContext)
         services.AddTransient<IBillRepository, BillRepository>();
         services.AddTransient<ICategoryRepository, CategoryRepository>();
+        services.AddTransient<IAccountRepository, AccountRepository>();
 
         // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         // ViewModels (transient = new instance each time)
         services.AddTransient<MainWindowViewModel>();
@@ -56,6 +63,7 @@ public partial class App : Application
         services.AddTransient<BillListViewModel>();
         services.AddTransient<BillEditViewModel>();
         services.AddTransient<AccountListViewModel>();
+        services.AddTransient<AccountEditViewModel>();
         services.AddTransient<BudgetViewModel>();
         services.AddTransient<SecureNotesViewModel>();
         services.AddTransient<ReportsViewModel>();
@@ -68,6 +76,10 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Load user settings
+        var settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
+        settingsService.Load();
 
         // Migrate existing unencrypted database if needed
         var migrator = _serviceProvider.GetRequiredService<DatabaseMigrator>();
@@ -82,6 +94,20 @@ public partial class App : Application
         var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
 
         mainWindow.DataContext = viewModel;
+
+        // Apply saved window settings
+        var settings = settingsService.Settings;
+        if (settings.IsMaximized)
+        {
+            mainWindow.WindowState = WindowState.Maximized;
+        }
+        else
+        {
+            mainWindow.Left = settings.WindowLeft;
+            mainWindow.Top = settings.WindowTop;
+            mainWindow.Width = settings.WindowWidth;
+            mainWindow.Height = settings.WindowHeight;
+        }
 
         // Initialize navigation (navigate to Dashboard)
         await viewModel.InitializeAsync();

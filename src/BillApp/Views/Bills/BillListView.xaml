@@ -54,17 +54,11 @@
                     </TextBox.Style>
                 </TextBox>
 
-                <ComboBox ItemsSource="{Binding StatusOptions}"
+                <ComboBox ItemsSource="{Binding StatusFilterOptions}"
                           SelectedItem="{Binding FilterStatus}"
                           Width="120"
                           Margin="10,0,0,0"
-                          Padding="8">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                          Padding="8"/>
 
                 <ComboBox ItemsSource="{Binding Categories}"
                           SelectedValue="{Binding FilterCategoryId}"
@@ -87,7 +81,8 @@
         </Border>
 
         <!-- Bills DataGrid -->
-        <DataGrid Grid.Row="2"
+        <DataGrid x:Name="BillsDataGrid"
+                  Grid.Row="2"
                   ItemsSource="{Binding Bills}"
                   SelectedItem="{Binding SelectedBill}"
                   AutoGenerateColumns="False"
@@ -151,7 +146,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Category -->
-                <DataGridTemplateColumn Header="Category" Width="120">
+                <DataGridTemplateColumn Header="Category" Width="110">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Category.Name}" Padding="5,0"/>
@@ -161,6 +156,24 @@
                         <DataTemplate>
                             <ComboBox ItemsSource="{Binding DataContext.Categories, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                       SelectedValue="{Binding CategoryId, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="Name"
+                                      Padding="5"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Account -->
+                <DataGridTemplateColumn Header="Account" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Account.Name}" Padding="5,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding DataContext.Accounts, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      SelectedValue="{Binding AccountId, UpdateSourceTrigger=PropertyChanged}"
                                       SelectedValuePath="Id"
                                       DisplayMemberPath="Name"
                                       Padding="5"/>

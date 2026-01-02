@@ -15,8 +15,8 @@ dotnet run --project src/BillApp/BillApp.csproj  # Run the application
 BillApp is a Windows desktop application for personal finance management built with:
 - **WPF** (.NET 8/10) for the UI
 - **MVVM pattern** using CommunityToolkit.Mvvm
-- **LiteDB** for local data storage
-- **AES + DPAPI** for encryption (Phase 3)
+- **LiteDB** for local data storage (encrypted)
+- **AES + DPAPI** for database and field-level encryption
 
 ## Solution Structure
 
@@ -36,13 +36,29 @@ BillApp/
 - **DataTemplates** in `App.xaml` map ViewModels to Views (like Angular routes)
 - **NavigationService** handles view navigation (like Angular Router)
 - **DI Container** is set up in `App.xaml.cs`
+- **Settings** are persisted via `ISettingsService` to JSON
 
 ## Key Files
 
-- `src/BillApp/App.xaml.cs` - DI container setup
+- `src/BillApp/App.xaml.cs` - DI container setup and app startup
 - `src/BillApp/Services/NavigationService.cs` - View navigation
+- `src/BillApp/Services/SettingsService.cs` - User preferences (window size, column widths)
 - `src/BillApp.Infrastructure/Data/LiteDbContext.cs` - Database access
+- `src/BillApp.Infrastructure/Security/EncryptionService.cs` - Field-level encryption
 - `src/BillApp.Core/Interfaces/Repositories/IRepository.cs` - Data access contract
+
+## Current Features
+
+- **Bills**: CRUD, inline editing, recurring bills, status tracking, category/account linking
+- **Accounts**: Bank accounts, credit cards, loans with encrypted credentials
+- **Security**: Database encryption (AES), DPAPI key protection, field-level encryption
+- **Settings**: Window size/position and column widths persisted
+
+## Data Models
+
+- `Bill` - Payment tracking with status, due date, recurrence, linked category/account
+- `Account` - Financial accounts with encrypted credentials (AccountNumber, Username, Password)
+- `Category` - Bill categorization (seeded with defaults)
 
 ## Security Guidelines
 
@@ -50,3 +66,4 @@ BillApp/
 - NEVER commit database files (*.db)
 - NEVER commit backup files (*.billbackup)
 - Sensitive data is stored encrypted using DPAPI-protected AES keys
+- Account credentials use field-level encryption via IEncryptionService

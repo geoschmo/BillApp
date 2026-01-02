@@ -12,6 +12,7 @@ public partial class BillListViewModel : ViewModelBase
 {
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IAccountRepository _accountRepository;
     private readonly INavigationService _navigationService;
 
     // Track original status for inline editing to detect status changes
@@ -24,13 +25,16 @@ public partial class BillListViewModel : ViewModelBase
     private ObservableCollection<Category> _categories = new();
 
     [ObservableProperty]
+    private ObservableCollection<Account> _accounts = new();
+
+    [ObservableProperty]
     private Bill? _selectedBill;
 
     [ObservableProperty]
     private string _filterText = string.Empty;
 
     [ObservableProperty]
-    private PaymentStatus? _filterStatus;
+    private string _filterStatus = "Active";
 
     [ObservableProperty]
     private Guid? _filterCategoryId;
@@ -38,10 +42,12 @@ public partial class BillListViewModel : ViewModelBase
     public BillListViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
+        IAccountRepository accountRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
+        _accountRepository = accountRepository;
         _navigationService = navigationService;
     }
 
@@ -62,6 +68,15 @@ public partial class BillListViewModel : ViewModelBase
             var categories = await _categoryRepository.GetAllAsync();
             Categories = new ObservableCollection<Category>(categories);
 
+            // Load accounts for display with a "None" option for inline editing
+            var accounts = await _accountRepository.GetAllAsync();
+            var accountList = new List<Account>
+            {
+                new Account { Id = Guid.Empty, Name = "(None)" }
+            };
+            accountList.AddRange(accounts);
+            Accounts = new ObservableCollection<Account>(accountList);
+
             // Load all bills
             await LoadBillsAsync();
         }
@@ -80,13 +95,17 @@ public partial class BillListViewModel : ViewModelBase
         // Materialize the list to avoid lazy evaluation issues
         var bills = (await _billRepository.GetAllAsync()).ToList();
 
-        // Load category for each bill and track original statuses
+        // Load category and account for each bill and track original statuses
         _originalStatuses.Clear();
         foreach (var bill in bills)
         {
             if (bill.CategoryId.HasValue && bill.CategoryId.Value != Guid.Empty)
             {
                 bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId.Value);
+            }
+            if (bill.AccountId.HasValue && bill.AccountId.Value != Guid.Empty)
+            {
+                bill.Account = Accounts.FirstOrDefault(a => a.Id == bill.AccountId.Value);
             }
             _originalStatuses[bill.Id] = bill.Status;
         }
@@ -101,10 +120,15 @@ public partial class BillListViewModel : ViewModelBase
                 (b.Notes?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
-        if (FilterStatus.HasValue)
+        // Apply status filter
+        filtered = FilterStatus switch
         {
-            filtered = filtered.Where(b => b.Status == FilterStatus.Value);
-        }
+            "Active" => filtered.Where(b => b.Status == PaymentStatus.Pending || b.Status == PaymentStatus.Overdue),
+            "Pending" => filtered.Where(b => b.Status == PaymentStatus.Pending),
+            "Overdue" => filtered.Where(b => b.Status == PaymentStatus.Overdue),
+            "Paid" => filtered.Where(b => b.Status == PaymentStatus.Paid),
+            _ => filtered // "All" or any other value shows everything
+        };
 
         if (FilterCategoryId.HasValue)
         {
@@ -178,7 +202,7 @@ public partial class BillListViewModel : ViewModelBase
     private async Task ClearFilterAsync()
     {
         FilterText = string.Empty;
-        FilterStatus = null;
+        FilterStatus = "Active";
         FilterCategoryId = null;
         await LoadBillsAsync();
     }
@@ -215,6 +239,21 @@ public partial class BillListViewModel : ViewModelBase
                 bill.Category = null;
             }
 
+            // Update the account reference - convert Guid.Empty to null (the "None" option)
+            if (bill.AccountId == Guid.Empty)
+            {
+                bill.AccountId = null;
+                bill.Account = null;
+            }
+            else if (bill.AccountId.HasValue)
+            {
+                bill.Account = Accounts.FirstOrDefault(a => a.Id == bill.AccountId.Value);
+            }
+            else
+            {
+                bill.Account = null;
+            }
+
             await _billRepository.UpdateAsync(bill);
 
             // Create next recurring bill if being marked as paid and is recurring
@@ -246,6 +285,9 @@ public partial class BillListViewModel : ViewModelBase
     }
 
     // Status options for the filter dropdown
+    public IEnumerable<string> StatusFilterOptions => new[] { "Active", "All", "Pending", "Overdue", "Paid" };
+
+    // Status options for inline editing (the actual enum values)
     public IEnumerable<PaymentStatus> StatusOptions => Enum.GetValues<PaymentStatus>();
 
     // Frequency options for inline editing

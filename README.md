@@ -7,7 +7,7 @@ A Windows desktop application for personal finance management, built with WPF an
 ### Current (Implemented)
 
 **Bill Management**
-- Create, edit, and delete bills
+- Create, edit, and delete bills with two-column form layout
 - Track amount due, amount paid, and balance
 - Due date tracking with overdue highlighting
 - Categorize bills (Utilities, Housing, Insurance, etc.)
@@ -15,19 +15,33 @@ A Windows desktop application for personal finance management, built with WPF an
 - Recurring bills (Weekly, Bi-weekly, Monthly, Quarterly, Semi-annually, Annually)
 - Auto-create next occurrence when a recurring bill is marked as paid
 - Inline editing directly in the bill list
-- Filter and search bills
+- Filter and search bills (defaults to showing Active bills only)
+- Link bills to payment accounts
+
+**Account Management**
+- Track all financial account types (Checking, Savings, Credit Card, Investment, Loan, Other)
+- Store account details: name, institution, account number, balance
+- Credit card specific fields: credit limit, interest rate (APR)
+- Online access credentials (encrypted): login URL, username, password
+- Summary dashboard showing total assets, liabilities, and net worth
+- Filter accounts by type and search by name
+- Mark accounts as active/closed
 
 **Security**
 - AES-256 encrypted database (LiteDB with password protection)
 - Encryption key protected by Windows DPAPI (tied to user account)
 - Automatic migration of unencrypted data on upgrade
-- Field-level encryption service available for sensitive data
+- Field-level encryption for sensitive account credentials
+
+**User Preferences**
+- Window size and position remembered across sessions
+- DataGrid column widths saved per view
+- Settings stored in `%LocalAppData%\BillApp\settings.json`
 
 ### Planned Features
 
 | Phase | Feature | Description |
 |-------|---------|-------------|
-| 4 | Accounts | Bank accounts, credit cards, asset tracking |
 | 5 | Budget | Budget creation, spending categories, progress tracking |
 | 6 | Recurring Service | Background service for auto-creating upcoming recurring bills |
 | 7 | Secure Notes | Encrypted storage for passwords, PINs, and sensitive notes |
@@ -51,11 +65,12 @@ BillApp/
 │   ├── BillApp/                    # WPF Application
 │   │   ├── Views/                  # XAML UI files
 │   │   ├── ViewModels/             # MVVM view models
-│   │   ├── Services/               # Navigation, etc.
+│   │   ├── Services/               # Navigation, settings, etc.
+│   │   ├── Settings/               # User preferences
 │   │   └── Converters/             # Value converters
 │   ├── BillApp.Core/               # Business Logic
-│   │   ├── Models/                 # Entity classes
-│   │   ├── Enums/                  # Status, frequency enums
+│   │   ├── Models/                 # Entity classes (Bill, Account, Category)
+│   │   ├── Enums/                  # Status, frequency, account type enums
 │   │   └── Interfaces/             # Repository & service contracts
 │   └── BillApp.Infrastructure/     # Data Access
 │       ├── Data/                   # LiteDB context
@@ -95,6 +110,7 @@ Or open `BillApp.sln` in Visual Studio and press F5.
 
 - **Database:** `%LocalAppData%\BillApp\billapp.db`
 - **Encryption Key:** `%LocalAppData%\BillApp\key.dat`
+- **Settings:** `%LocalAppData%\BillApp\settings.json`
 
 > **Note:** The encryption key is protected by your Windows user account. If you reinstall Windows or move to a new PC, you'll need to restore from an encrypted backup (Phase 10).
 
@@ -115,6 +131,7 @@ This project uses patterns familiar to Angular developers:
 
 - Database is encrypted at rest using LiteDB's built-in AES encryption
 - Encryption key is protected by Windows DPAPI (CurrentUser scope)
+- Sensitive account credentials (account numbers, usernames, passwords) are encrypted at field level
 - No sensitive data is stored in plain text
 - Key files and database files are excluded from git
 

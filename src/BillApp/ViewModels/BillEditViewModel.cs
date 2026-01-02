@@ -12,6 +12,7 @@ public partial class BillEditViewModel : ViewModelBase
 {
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IAccountRepository _accountRepository;
     private readonly INavigationService _navigationService;
 
     private Guid? _editingBillId;
@@ -57,7 +58,13 @@ public partial class BillEditViewModel : ViewModelBase
     private string? _accountNumber;
 
     [ObservableProperty]
+    private Guid? _accountId;
+
+    [ObservableProperty]
     private ObservableCollection<Category> _categories = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Account> _accounts = new();
 
     [ObservableProperty]
     private string? _validationError;
@@ -65,10 +72,12 @@ public partial class BillEditViewModel : ViewModelBase
     public BillEditViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
+        IAccountRepository accountRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
+        _accountRepository = accountRepository;
         _navigationService = navigationService;
     }
 
@@ -81,6 +90,15 @@ public partial class BillEditViewModel : ViewModelBase
             // Load categories
             var categories = await _categoryRepository.GetAllAsync();
             Categories = new ObservableCollection<Category>(categories);
+
+            // Load accounts (only active ones) with a "None" option at the start
+            var accounts = await _accountRepository.GetActiveAsync();
+            var accountList = new List<Account>
+            {
+                new Account { Id = Guid.Empty, Name = "(None)" }
+            };
+            accountList.AddRange(accounts);
+            Accounts = new ObservableCollection<Account>(accountList);
 
             // If parameter is a Guid, we're editing an existing bill
             if (parameter is Guid billId)
@@ -100,6 +118,7 @@ public partial class BillEditViewModel : ViewModelBase
                     PaidDate = bill.PaidDate;
                     Frequency = bill.Frequency;
                     CategoryId = bill.CategoryId;
+                    AccountId = bill.AccountId;
                     Notes = bill.Notes;
                     PaymentUrl = bill.PaymentUrl;
                     AccountNumber = bill.AccountNumber;
@@ -141,6 +160,9 @@ public partial class BillEditViewModel : ViewModelBase
             // Check if status is being changed to Paid
             bool beingMarkedAsPaid = Status == PaymentStatus.Paid && _originalStatus != PaymentStatus.Paid;
 
+            // Convert Guid.Empty to null for AccountId (the "None" option)
+            var accountIdToSave = AccountId == Guid.Empty ? null : AccountId;
+
             if (_editingBillId.HasValue)
             {
                 // Update existing bill
@@ -156,6 +178,7 @@ public partial class BillEditViewModel : ViewModelBase
                     bill.PaidDate = PaidDate;
                     bill.Frequency = Frequency;
                     bill.CategoryId = CategoryId;
+                    bill.AccountId = accountIdToSave;
                     bill.Notes = Notes;
                     bill.PaymentUrl = PaymentUrl;
                     bill.AccountNumber = AccountNumber;
@@ -194,6 +217,7 @@ public partial class BillEditViewModel : ViewModelBase
                     PaidDate = PaidDate,
                     Frequency = Frequency,
                     CategoryId = CategoryId,
+                    AccountId = accountIdToSave,
                     Notes = Notes,
                     PaymentUrl = PaymentUrl,
                     AccountNumber = AccountNumber

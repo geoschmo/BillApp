@@ -72,8 +72,14 @@ public class Bill : EntityBase
     /// </summary>
     public DateTime? PaidDate { get; set; }
 
-    // Navigation property - not stored in DB, set by repository
+    /// <summary>
+    /// Account ID for the payment account (optional)
+    /// </summary>
+    public Guid? AccountId { get; set; }
+
+    // Navigation properties - not stored in DB, set by ViewModel
     public Category? Category { get; set; }
+    public Account? Account { get; set; }
 
     /// <summary>
     /// Whether this bill is overdue (computed, not stored)
@@ -105,6 +111,7 @@ public class Bill : EntityBase
             Status = PaymentStatus.Pending,
             Frequency = Frequency,
             CategoryId = CategoryId,
+            AccountId = AccountId,
             Notes = Notes,
             PaymentUrl = PaymentUrl,
             AccountNumber = AccountNumber,

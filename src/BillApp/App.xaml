@@ -46,6 +46,10 @@
                 <accountViews:AccountListView/>
             </DataTemplate>
 
+            <DataTemplate DataType="{x:Type vm:AccountEditViewModel}">
+                <accountViews:AccountEditView/>
+            </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:BudgetViewModel}">
                 <budgetViews:BudgetView/>
             </DataTemplate>
