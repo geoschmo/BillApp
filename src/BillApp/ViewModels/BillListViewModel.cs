@@ -77,15 +77,16 @@ public partial class BillListViewModel : ViewModelBase
 
     private async Task LoadBillsAsync()
     {
-        var bills = await _billRepository.GetAllAsync();
+        // Materialize the list to avoid lazy evaluation issues
+        var bills = (await _billRepository.GetAllAsync()).ToList();
 
         // Load category for each bill and track original statuses
         _originalStatuses.Clear();
         foreach (var bill in bills)
         {
-            if (bill.CategoryId.HasValue)
+            if (bill.CategoryId.HasValue && bill.CategoryId.Value != Guid.Empty)
             {
-                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId);
+                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId.Value);
             }
             _originalStatuses[bill.Id] = bill.Status;
         }
@@ -207,7 +208,7 @@ public partial class BillListViewModel : ViewModelBase
             // Update the category reference
             if (bill.CategoryId.HasValue)
             {
-                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId);
+                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId.Value);
             }
             else
             {
@@ -227,6 +228,15 @@ public partial class BillListViewModel : ViewModelBase
             {
                 // Update the tracked original status
                 _originalStatuses[bill.Id] = bill.Status;
+
+                // Refresh the item in the collection to update the UI
+                // (Bill doesn't implement INotifyPropertyChanged)
+                var index = Bills.IndexOf(bill);
+                if (index >= 0)
+                {
+                    Bills.RemoveAt(index);
+                    Bills.Insert(index, bill);
+                }
             }
         }
         catch (Exception ex)
