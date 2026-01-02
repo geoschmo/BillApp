@@ -24,7 +24,7 @@ public class LiteDbContext : IDisposable
             .Ignore(x => x.IsRecurring);
     }
 
-    public LiteDbContext(string? databasePath = null)
+    public LiteDbContext(string? databasePath = null, string? password = null)
     {
         // Default path: %LocalAppData%\BillApp\billapp.db
         var dbPath = databasePath ?? GetDefaultDatabasePath();
@@ -37,8 +37,10 @@ public class LiteDbContext : IDisposable
         }
 
         // Connection string with shared connection mode (allows multiple reads)
-        // Note: Password encryption will be added in Phase 3 (Security)
-        _connectionString = $"Filename={dbPath};Connection=shared";
+        // Password enables AES encryption on the database file
+        _connectionString = string.IsNullOrEmpty(password)
+            ? $"Filename={dbPath};Connection=shared"
+            : $"Filename={dbPath};Password={password};Connection=shared";
     }
 
     /// <summary>

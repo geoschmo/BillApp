@@ -21,6 +21,7 @@ packages/
 
 # Sensitive data - NEVER commit these
 *.key
+*.dat
 *.billbackup
 appsettings.*.json
 !appsettings.json

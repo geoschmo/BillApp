@@ -1,7 +1,9 @@
 using System.Windows;
 using BillApp.Core.Interfaces.Repositories;
+using BillApp.Core.Interfaces.Services;
 using BillApp.Infrastructure.Data;
 using BillApp.Infrastructure.Repositories;
+using BillApp.Infrastructure.Security;
 using BillApp.Services;
 using BillApp.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,8 +28,19 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // Database context (singleton - one connection for the app)
-        services.AddSingleton<LiteDbContext>();
+        // Security services (singleton - initialize once with keys)
+        services.AddSingleton<KeyManager>();
+        services.AddSingleton<DatabaseMigrator>();
+        services.AddSingleton<IEncryptionService, EncryptionService>();
+
+        // Database context with encryption (singleton - one connection for the app)
+        // Uses factory pattern to inject the encryption password
+        services.AddSingleton<LiteDbContext>(sp =>
+        {
+            var keyManager = sp.GetRequiredService<KeyManager>();
+            var password = keyManager.GetOrCreateDatabaseKey();
+            return new LiteDbContext(password: password);
+        });
         services.AddSingleton<DatabaseInitializer>();
 
         // Repositories (transient - new instance each time, shares DbContext)
@@ -55,6 +68,10 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Migrate existing unencrypted database if needed
+        var migrator = _serviceProvider.GetRequiredService<DatabaseMigrator>();
+        migrator.MigrateIfNeeded();
 
         // Initialize database with default data
         var dbInitializer = _serviceProvider.GetRequiredService<DatabaseInitializer>();
