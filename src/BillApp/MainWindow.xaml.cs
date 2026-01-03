@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using BillApp.Services;
 
@@ -16,6 +17,10 @@ public partial class MainWindow : Window
         _settingsService = settingsService;
         InitializeComponent();
         Closing += MainWindow_Closing;
+
+        // Set window title with version
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        Title = $"BillApp v{version?.Major}.{version?.Minor}.{version?.Build}";
     }
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)

@@ -1,12 +1,14 @@
 # Build outputs
 bin/
 obj/
+publish/
 [Dd]ebug/
 [Rr]elease/
 
 # Visual Studio
 .vs/
 *.user
+*.pubxml
 *.userosscache
 *.suo
 *.cache
