@@ -4,17 +4,173 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BillApp.ViewModels"
+             xmlns:settings="clr-namespace:BillApp.Settings"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="20">
-        <StackPanel>
-            <TextBlock Text="{Binding Title}"
+             d:DesignHeight="600" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="0,0,0,20"/>
+            <Setter Property="Padding" Value="15"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="SectionHeaderStyle">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding Title}"
                        FontSize="24"
                        FontWeight="Bold"
                        Margin="0,0,0,20"/>
-            <TextBlock Text="Settings and backup/restore coming soon..."
-                       Foreground="Gray"/>
-        </StackPanel>
-    </Grid>
+
+            <StackPanel Grid.Row="1">
+                <!-- Backup & Restore Section -->
+                <GroupBox Header="Backup &amp; Restore">
+                    <StackPanel>
+                        <!-- Last Backup Info -->
+                        <TextBlock Text="{Binding LastBackupInfo}"
+                                   Foreground="Gray"
+                                   Margin="0,0,0,15"/>
+
+                        <!-- Backup Folder -->
+                        <TextBlock Text="Backup Location"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding BackupFolder, Mode=TwoWay}"
+                                     IsReadOnly="True"
+                                     Padding="8,6"/>
+                            <Button Grid.Column="1"
+                                    Content="Browse..."
+                                    Command="{Binding BrowseBackupFolderCommand}"
+                                    Padding="12,6"
+                                    Margin="10,0,0,0"/>
+                            <Button Grid.Column="2"
+                                    Content="Open"
+                                    Command="{Binding OpenBackupFolderCommand}"
+                                    Padding="12,6"
+                                    Margin="10,0,0,0"/>
+                        </Grid>
+
+                        <!-- Manual Backup/Restore Buttons -->
+                        <TextBlock Text="Manual Backup"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Button Content="Create Backup Now"
+                                    Command="{Binding CreateBackupCommand}"
+                                    Padding="15,8"
+                                    Margin="0,0,10,0"
+                                    IsEnabled="{Binding IsBackingUp, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Button Content="Restore from Backup"
+                                    Command="{Binding RestoreBackupCommand}"
+                                    Padding="15,8"
+                                    IsEnabled="{Binding IsRestoring, Converter={StaticResource InverseBoolConverter}}"/>
+                            <TextBlock Text="Creating backup..."
+                                       VerticalAlignment="Center"
+                                       Margin="15,0,0,0"
+                                       Foreground="Gray"
+                                       Visibility="{Binding IsBackingUp, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <TextBlock Text="Restoring..."
+                                       VerticalAlignment="Center"
+                                       Margin="15,0,0,0"
+                                       Foreground="Gray"
+                                       Visibility="{Binding IsRestoring, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Auto Backup Settings -->
+                        <TextBlock Text="Automatic Backups"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <CheckBox Content="Enable automatic backups"
+                                  IsChecked="{Binding AutoBackupEnabled}"
+                                  Margin="0,0,0,10"/>
+
+                        <Grid IsEnabled="{Binding AutoBackupEnabled}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                       Text="Frequency:"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                      ItemsSource="{Binding FrequencyOptions}"
+                                      SelectedItem="{Binding SelectedFrequency}"
+                                      Padding="8,6"
+                                      Margin="0,0,0,10"/>
+
+                            <TextBlock Grid.Row="0" Grid.Column="2"
+                                       Text="Keep max:"
+                                       Style="{StaticResource LabelStyle}"
+                                       Margin="20,0,10,0"/>
+                            <TextBox Grid.Row="0" Grid.Column="3"
+                                     Text="{Binding MaxBackupsToKeep, UpdateSourceTrigger=LostFocus}"
+                                     Padding="8,6"
+                                     Margin="0,0,0,10"/>
+                            <TextBlock Grid.Row="0" Grid.Column="4"
+                                       Text="backups"
+                                       Style="{StaticResource LabelStyle}"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="2"
+                                       Text="Delete after:"
+                                       Style="{StaticResource LabelStyle}"
+                                       Margin="20,0,10,0"/>
+                            <TextBox Grid.Row="1" Grid.Column="3"
+                                     Text="{Binding MaxBackupAgeDays, UpdateSourceTrigger=LostFocus}"
+                                     Padding="8,6"/>
+                            <TextBlock Grid.Row="1" Grid.Column="4"
+                                       Text="days"
+                                       Style="{StaticResource LabelStyle}"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Info Section -->
+                <Border Background="#F5F5F5"
+                        BorderBrush="#DDDDDD"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="About Backups"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="Gray">
+                            <Run Text="Backups are encrypted with a password you provide. "/>
+                            <Run Text="You will need this password to restore the backup on this or any other computer." FontWeight="SemiBold"/>
+                            <LineBreak/><LineBreak/>
+                            <Run Text="Backups include all bills, accounts, and categories. Account credentials are re-encrypted for portability."/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

@@ -4,6 +4,7 @@ using BillApp.Core.Interfaces.Services;
 using BillApp.Infrastructure.Data;
 using BillApp.Infrastructure.Repositories;
 using BillApp.Infrastructure.Security;
+using BillApp.Infrastructure.Services;
 using BillApp.Services;
 using BillApp.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +57,8 @@ public partial class App : Application
         // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IBackupService, BackupService>();
+        services.AddSingleton<IAutoBackupService, AutoBackupService>();
 
         // ViewModels (transient = new instance each time)
         services.AddTransient<MainWindowViewModel>();
@@ -112,11 +115,19 @@ public partial class App : Application
         // Initialize navigation (navigate to Dashboard)
         await viewModel.InitializeAsync();
 
+        // Start auto-backup service
+        var autoBackupService = _serviceProvider.GetRequiredService<IAutoBackupService>();
+        autoBackupService.Start();
+
         mainWindow.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Stop auto-backup service
+        var autoBackupService = _serviceProvider.GetService<IAutoBackupService>();
+        autoBackupService?.Dispose();
+
         // Dispose the database context when the app exits
         if (_serviceProvider is IDisposable disposable)
         {
