@@ -14,9 +14,11 @@ A Windows desktop application for personal finance management, built with WPF an
 - Payment status tracking (Pending, Paid, Overdue)
 - Recurring bills (Weekly, Bi-weekly, Monthly, Quarterly, Semi-annually, Annually)
 - Auto-create next occurrence when a recurring bill is marked as paid
+- New recurring bills carry forward reduced balance (previous balance minus payment)
+- Pay dialog for entering payment amount and date
 - Inline editing directly in the bill list
 - Filter and search bills (defaults to showing Active bills only)
-- Link bills to payment accounts
+- Link bills to payment accounts (balance syncs automatically)
 
 **Account Management**
 - Track all financial account types (Checking, Savings, Credit Card, Investment, Loan, Other)
@@ -24,18 +26,29 @@ A Windows desktop application for personal finance management, built with WPF an
 - Credit card specific fields: credit limit, interest rate (APR)
 - Online access credentials (encrypted): login URL, username, password
 - Summary dashboard showing total assets, liabilities, and net worth
+- Account balance syncs with linked bill balance
 - Filter accounts by type and search by name
 - Mark accounts as active/closed
+
+**Backup & Restore**
+- Manual backup with password-protected encryption (PBKDF2 + AES-256)
+- Restore from backup with confirmation dialog showing backup details
+- Automatic backup reminders (daily, weekly, or monthly)
+- Backup retention settings (max count and age limits)
+- Portable backups work on any PC (credentials re-encrypted for portability)
+- Backup files stored in configurable location
 
 **Security**
 - AES-256 encrypted database (LiteDB with password protection)
 - Encryption key protected by Windows DPAPI (tied to user account)
 - Automatic migration of unencrypted data on upgrade
 - Field-level encryption for sensitive account credentials
+- Backup encryption independent of machine (password-based)
 
 **User Preferences**
 - Window size and position remembered across sessions
 - DataGrid column widths saved per view
+- Backup folder and auto-backup settings
 - Settings stored in `%LocalAppData%\BillApp\settings.json`
 
 ### Planned Features
@@ -47,7 +60,6 @@ A Windows desktop application for personal finance management, built with WPF an
 | 7 | Secure Notes | Encrypted storage for passwords, PINs, and sensitive notes |
 | 8 | Dashboard & Reports | Financial overview, charts, spending analysis |
 | 9 | Notifications | Due date reminders and alerts |
-| 10 | Backup & Restore | Encrypted export/import for cloud backup (Google Drive, etc.) |
 
 ## Technology Stack
 
@@ -111,8 +123,9 @@ Or open `BillApp.sln` in Visual Studio and press F5.
 - **Database:** `%LocalAppData%\BillApp\billapp.db`
 - **Encryption Key:** `%LocalAppData%\BillApp\key.dat`
 - **Settings:** `%LocalAppData%\BillApp\settings.json`
+- **Backups:** `%USERPROFILE%\Documents\BillApp Backups\` (default, configurable)
 
-> **Note:** The encryption key is protected by your Windows user account. If you reinstall Windows or move to a new PC, you'll need to restore from an encrypted backup (Phase 10).
+> **Note:** The database encryption key is protected by your Windows user account. If you reinstall Windows or move to a new PC, use the Backup & Restore feature to migrate your data. Backups are encrypted with a password you choose and can be restored on any machine.
 
 ## Architecture Notes
 
@@ -132,8 +145,9 @@ This project uses patterns familiar to Angular developers:
 - Database is encrypted at rest using LiteDB's built-in AES encryption
 - Encryption key is protected by Windows DPAPI (CurrentUser scope)
 - Sensitive account credentials (account numbers, usernames, passwords) are encrypted at field level
+- Backups use PBKDF2 (100,000 iterations) key derivation with AES-256-CBC encryption
 - No sensitive data is stored in plain text
-- Key files and database files are excluded from git
+- Key files, database files, and backup files are excluded from git
 
 ## License
 

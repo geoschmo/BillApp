@@ -22,13 +22,24 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
 
     <!-- Version info -->
-    <Version>1.2.0</Version>
-    <FileVersion>1.2.0.0</FileVersion>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <Version>1.3.0</Version>
+    <FileVersion>1.3.0.0</FileVersion>
+    <AssemblyVersion>1.3.0.0</AssemblyVersion>
     <Product>BillApp</Product>
     <Company>Personal</Company>
     <Description>Personal finance and bill tracking application</Description>
     <Copyright>Copyright © 2025</Copyright>
+
+    <!-- Publish as single exe -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
+
+  <!-- Import local deployment targets if present (gitignored) -->
+  <Import Project="Deploy.local.targets" Condition="Exists('Deploy.local.targets')" />
 
 </Project>
