@@ -98,15 +98,16 @@ public class Bill : EntityBase
 
     /// <summary>
     /// Creates a copy of this bill for the next recurring period.
+    /// New balance is reduced by the amount paid on this bill.
     /// </summary>
     public Bill CreateNextRecurrence()
     {
         return new Bill
         {
             Payee = Payee,
-            AmountDue = AmountDue,
+            AmountDue = 0, // Start fresh, user will set the new amount due
             AmountPaid = 0,
-            Balance = Balance, // Carry over balance for things like credit cards
+            Balance = Balance - AmountPaid, // Reduce balance by payment
             DueDate = CalculateNextDueDate(),
             Status = PaymentStatus.Pending,
             Frequency = Frequency,

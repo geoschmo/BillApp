@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using BillApp.Core.Enums;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
 using BillApp.Services;
+using BillApp.Views.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -169,15 +171,17 @@ public partial class BillListViewModel : ViewModelBase
     {
         if (bill == null) return;
 
-        // Mark current bill as paid
-        bill.Status = PaymentStatus.Paid;
-        bill.PaidDate = DateTime.Now;
+        // Show pay dialog with default values
+        var dialog = new PayBillDialog(bill.Payee, bill.AmountDue, bill.DueDate);
+        dialog.Owner = Application.Current.MainWindow;
 
-        // If amount paid wasn't set, default to amount due
-        if (bill.AmountPaid == 0)
-        {
-            bill.AmountPaid = bill.AmountDue;
-        }
+        if (dialog.ShowDialog() != true)
+            return;
+
+        // Mark current bill as paid with values from dialog
+        bill.Status = PaymentStatus.Paid;
+        bill.AmountPaid = dialog.PaidAmount;
+        bill.PaidDate = dialog.PaidDate;
 
         await _billRepository.UpdateAsync(bill);
 
@@ -186,6 +190,17 @@ public partial class BillListViewModel : ViewModelBase
         {
             var nextBill = bill.CreateNextRecurrence();
             await _billRepository.InsertAsync(nextBill);
+
+            // Update linked account balance to match new bill balance
+            if (nextBill.AccountId.HasValue && nextBill.AccountId.Value != Guid.Empty)
+            {
+                var account = await _accountRepository.GetByIdAsync(nextBill.AccountId.Value);
+                if (account != null)
+                {
+                    account.Balance = nextBill.Balance;
+                    await _accountRepository.UpdateAsync(account);
+                }
+            }
         }
 
         // Refresh the list to update UI
@@ -261,10 +276,34 @@ public partial class BillListViewModel : ViewModelBase
             {
                 var nextBill = bill.CreateNextRecurrence();
                 await _billRepository.InsertAsync(nextBill);
+
+                // Update linked account balance to match new bill balance
+                if (nextBill.AccountId.HasValue && nextBill.AccountId.Value != Guid.Empty)
+                {
+                    var account = await _accountRepository.GetByIdAsync(nextBill.AccountId.Value);
+                    if (account != null)
+                    {
+                        account.Balance = nextBill.Balance;
+                        await _accountRepository.UpdateAsync(account);
+                    }
+                }
+
                 await LoadBillsAsync(); // Refresh to show the new bill
             }
             else
             {
+                // Sync pending bill balance to linked account
+                if (bill.Status == PaymentStatus.Pending &&
+                    bill.AccountId.HasValue && bill.AccountId.Value != Guid.Empty)
+                {
+                    var account = await _accountRepository.GetByIdAsync(bill.AccountId.Value);
+                    if (account != null)
+                    {
+                        account.Balance = bill.Balance;
+                        await _accountRepository.UpdateAsync(account);
+                    }
+                }
+
                 // Update the tracked original status
                 _originalStatuses[bill.Id] = bill.Status;
 

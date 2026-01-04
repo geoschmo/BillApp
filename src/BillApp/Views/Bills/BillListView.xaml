@@ -246,7 +246,7 @@
                                         Margin="0,0,5,0"
                                         Cursor="Hand"/>
 
-                                <Button Content="Paid"
+                                <Button Content="Pay"
                                         Command="{Binding DataContext.MarkAsPaidCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
                                         Padding="8,4"
