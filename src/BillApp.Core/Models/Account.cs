@@ -67,6 +67,11 @@ public class Account : EntityBase
     /// </summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Whether this account can be used as a payment method for bills
+    /// </summary>
+    public bool IsPaymentAccount { get; set; }
+
     // Navigation property - bills linked to this account (not stored in DB)
     public List<Bill> Bills { get; set; } = new();
 

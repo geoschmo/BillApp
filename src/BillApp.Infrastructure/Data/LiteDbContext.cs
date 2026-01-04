@@ -20,6 +20,7 @@ public class LiteDbContext : IDisposable
         BsonMapper.Global.Entity<Bill>()
             .Ignore(x => x.Category)
             .Ignore(x => x.Account)
+            .Ignore(x => x.PaymentAccount)
             .Ignore(x => x.IsOverdue)
             .Ignore(x => x.DaysUntilDue)
             .Ignore(x => x.IsRecurring);

@@ -171,8 +171,19 @@ public partial class BillListViewModel : ViewModelBase
     {
         if (bill == null) return;
 
+        // Build payment methods list (None, Cash, then payment accounts)
+        var accounts = await _accountRepository.GetActiveAsync();
+        var paymentMethods = new List<PaymentMethodItem>
+        {
+            new PaymentMethodItem { Name = "(None)" },
+            new PaymentMethodItem { Name = "Cash", IsCash = true }
+        };
+        paymentMethods.AddRange(accounts
+            .Where(a => a.IsPaymentAccount)
+            .Select(a => new PaymentMethodItem { AccountId = a.Id, Name = a.Name }));
+
         // Show pay dialog with default values
-        var dialog = new PayBillDialog(bill.Payee, bill.AmountDue, bill.DueDate);
+        var dialog = new PayBillDialog(bill.Payee, bill.AmountDue, bill.DueDate, paymentMethods);
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() != true)
@@ -182,6 +193,14 @@ public partial class BillListViewModel : ViewModelBase
         bill.Status = PaymentStatus.Paid;
         bill.AmountPaid = dialog.PaidAmount;
         bill.PaidDate = dialog.PaidDate;
+        bill.Confirmation = dialog.Confirmation;
+
+        // Set payment method
+        if (dialog.SelectedPaymentMethod != null)
+        {
+            bill.IsCashPayment = dialog.SelectedPaymentMethod.IsCash;
+            bill.PaymentAccountId = dialog.SelectedPaymentMethod.AccountId;
+        }
 
         await _billRepository.UpdateAsync(bill);
 

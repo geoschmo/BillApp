@@ -32,6 +32,9 @@ public class BillBackupDto
     public string? PaymentUrl { get; set; }
     public string? AccountNumber { get; set; }
     public Guid? PreviousBillId { get; set; }
+    public string? Confirmation { get; set; }
+    public Guid? PaymentAccountId { get; set; }
+    public bool IsCashPayment { get; set; }
 }
 
 /// <summary>
@@ -54,6 +57,7 @@ public class AccountBackupDto
     public string? Password { get; set; } // Re-encrypted with backup password
     public string? Notes { get; set; }
     public bool IsActive { get; set; }
+    public bool IsPaymentAccount { get; set; }
 }
 
 /// <summary>

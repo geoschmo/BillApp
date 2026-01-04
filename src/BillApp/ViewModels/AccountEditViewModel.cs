@@ -56,6 +56,9 @@ public partial class AccountEditViewModel : ViewModelBase
     private bool _isActive = true;
 
     [ObservableProperty]
+    private bool _isPaymentAccount;
+
+    [ObservableProperty]
     private string? _validationError;
 
     public AccountEditViewModel(
@@ -92,6 +95,7 @@ public partial class AccountEditViewModel : ViewModelBase
                     LoginUrl = account.LoginUrl;
                     Notes = account.Notes;
                     IsActive = account.IsActive;
+                    IsPaymentAccount = account.IsPaymentAccount;
 
                     // Decrypt sensitive fields
                     AccountNumber = DecryptIfNotEmpty(account.AccountNumber);
@@ -135,6 +139,7 @@ public partial class AccountEditViewModel : ViewModelBase
                     account.LoginUrl = LoginUrl;
                     account.Notes = Notes;
                     account.IsActive = IsActive;
+                    account.IsPaymentAccount = IsPaymentAccount;
 
                     // Encrypt sensitive fields
                     account.AccountNumber = EncryptIfNotEmpty(AccountNumber);
@@ -158,6 +163,7 @@ public partial class AccountEditViewModel : ViewModelBase
                     LoginUrl = LoginUrl,
                     Notes = Notes,
                     IsActive = IsActive,
+                    IsPaymentAccount = IsPaymentAccount,
 
                     // Encrypt sensitive fields
                     AccountNumber = EncryptIfNotEmpty(AccountNumber),

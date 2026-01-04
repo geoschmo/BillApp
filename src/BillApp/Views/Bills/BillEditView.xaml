@@ -102,6 +102,31 @@
                                 Padding="10"/>
                 </Grid>
 
+                <!-- Pay Method and Confirmation -->
+                <Grid Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Pay Method" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox Grid.Column="0" Grid.Row="1"
+                              ItemsSource="{Binding PaymentMethods}"
+                              SelectedItem="{Binding SelectedPaymentMethod}"
+                              DisplayMemberPath="Name"
+                              Padding="10"/>
+
+                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Confirmation #" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Grid.Column="2" Grid.Row="1"
+                             Text="{Binding Confirmation, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="10"/>
+                </Grid>
+
                 <!-- Category and Status -->
                 <Grid Margin="0,0,0,15">
                     <Grid.ColumnDefinitions>
@@ -132,32 +157,12 @@
 
             <!-- Right Column -->
             <StackPanel Grid.Column="2">
-                <!-- Recurrence and Payment Account -->
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Recurrence" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <ComboBox Grid.Column="0" Grid.Row="1"
-                              ItemsSource="{Binding FrequencyOptions}"
-                              SelectedItem="{Binding Frequency}"
-                              Padding="10"/>
-
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Payment Account" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <ComboBox Grid.Column="2" Grid.Row="1"
-                              ItemsSource="{Binding Accounts}"
-                              SelectedValue="{Binding AccountId}"
-                              SelectedValuePath="Id"
-                              DisplayMemberPath="Name"
-                              Padding="10"/>
-                </Grid>
+                <!-- Recurrence -->
+                <TextBlock Text="Recurrence" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <ComboBox ItemsSource="{Binding FrequencyOptions}"
+                          SelectedItem="{Binding Frequency}"
+                          Padding="10"
+                          Margin="0,0,0,15"/>
 
                 <!-- Payment URL -->
                 <TextBlock Text="Payment URL" FontWeight="SemiBold" Margin="0,0,0,5"/>

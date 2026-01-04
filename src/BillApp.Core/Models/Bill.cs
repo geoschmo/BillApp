@@ -73,13 +73,29 @@ public class Bill : EntityBase
     public DateTime? PaidDate { get; set; }
 
     /// <summary>
-    /// Account ID for the payment account (optional)
+    /// Payment confirmation number or reference
+    /// </summary>
+    public string? Confirmation { get; set; }
+
+    /// <summary>
+    /// Account used to pay this bill (different from AccountId which links the bill to an account)
+    /// </summary>
+    public Guid? PaymentAccountId { get; set; }
+
+    /// <summary>
+    /// Whether this bill was paid with cash
+    /// </summary>
+    public bool IsCashPayment { get; set; }
+
+    /// <summary>
+    /// Account ID for the linked account (optional) - the account this bill is associated with
     /// </summary>
     public Guid? AccountId { get; set; }
 
     // Navigation properties - not stored in DB, set by ViewModel
     public Category? Category { get; set; }
     public Account? Account { get; set; }
+    public Account? PaymentAccount { get; set; }
 
     /// <summary>
     /// Whether this bill is overdue (computed, not stored)

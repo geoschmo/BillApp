@@ -8,6 +8,17 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BillApp.ViewModels;
 
+/// <summary>
+/// Represents a payment method option in the dropdown (None, Cash, or an Account)
+/// </summary>
+public class PaymentMethodItem
+{
+    public Guid? AccountId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool IsCash { get; set; }
+    public bool IsNone => AccountId == null && !IsCash;
+}
+
 public partial class BillEditViewModel : ViewModelBase
 {
     private readonly IBillRepository _billRepository;
@@ -61,10 +72,16 @@ public partial class BillEditViewModel : ViewModelBase
     private Guid? _accountId;
 
     [ObservableProperty]
+    private string? _confirmation;
+
+    [ObservableProperty]
     private ObservableCollection<Category> _categories = new();
 
     [ObservableProperty]
-    private ObservableCollection<Account> _accounts = new();
+    private ObservableCollection<PaymentMethodItem> _paymentMethods = new();
+
+    [ObservableProperty]
+    private PaymentMethodItem? _selectedPaymentMethod;
 
     [ObservableProperty]
     private string? _validationError;
@@ -91,14 +108,21 @@ public partial class BillEditViewModel : ViewModelBase
             var categories = await _categoryRepository.GetAllAsync();
             Categories = new ObservableCollection<Category>(categories);
 
-            // Load accounts (only active ones) with a "None" option at the start
+            // Load payment methods (None, Cash, then active payment accounts)
             var accounts = await _accountRepository.GetActiveAsync();
-            var accountList = new List<Account>
+            var paymentAccounts = accounts.Where(a => a.IsPaymentAccount).ToList();
+            var paymentMethodList = new List<PaymentMethodItem>
             {
-                new Account { Id = Guid.Empty, Name = "(None)" }
+                new PaymentMethodItem { Name = "(None)" },
+                new PaymentMethodItem { Name = "Cash", IsCash = true }
             };
-            accountList.AddRange(accounts);
-            Accounts = new ObservableCollection<Account>(accountList);
+            paymentMethodList.AddRange(paymentAccounts.Select(a => new PaymentMethodItem
+            {
+                AccountId = a.Id,
+                Name = a.Name
+            }));
+            PaymentMethods = new ObservableCollection<PaymentMethodItem>(paymentMethodList);
+            SelectedPaymentMethod = PaymentMethods.First(); // Default to (None)
 
             // If parameter is a Guid, we're editing an existing bill
             if (parameter is Guid billId)
@@ -122,6 +146,18 @@ public partial class BillEditViewModel : ViewModelBase
                     Notes = bill.Notes;
                     PaymentUrl = bill.PaymentUrl;
                     AccountNumber = bill.AccountNumber;
+                    Confirmation = bill.Confirmation;
+
+                    // Set selected payment method based on bill data
+                    if (bill.IsCashPayment)
+                    {
+                        SelectedPaymentMethod = PaymentMethods.FirstOrDefault(p => p.IsCash);
+                    }
+                    else if (bill.PaymentAccountId.HasValue)
+                    {
+                        SelectedPaymentMethod = PaymentMethods.FirstOrDefault(p => p.AccountId == bill.PaymentAccountId);
+                    }
+                    // Otherwise defaults to (None)
 
                     _originalStatus = bill.Status; // Remember original status
                 }
@@ -163,6 +199,10 @@ public partial class BillEditViewModel : ViewModelBase
             // Convert Guid.Empty to null for AccountId (the "None" option)
             var accountIdToSave = AccountId == Guid.Empty ? null : AccountId;
 
+            // Determine payment method values from selection
+            bool isCashPayment = SelectedPaymentMethod?.IsCash ?? false;
+            Guid? paymentAccountId = SelectedPaymentMethod?.AccountId;
+
             if (_editingBillId.HasValue)
             {
                 // Update existing bill
@@ -182,6 +222,9 @@ public partial class BillEditViewModel : ViewModelBase
                     bill.Notes = Notes;
                     bill.PaymentUrl = PaymentUrl;
                     bill.AccountNumber = AccountNumber;
+                    bill.Confirmation = Confirmation;
+                    bill.IsCashPayment = isCashPayment;
+                    bill.PaymentAccountId = paymentAccountId;
 
                     // If being marked as paid, set paid date and default amount paid
                     if (beingMarkedAsPaid)
@@ -220,7 +263,10 @@ public partial class BillEditViewModel : ViewModelBase
                     AccountId = accountIdToSave,
                     Notes = Notes,
                     PaymentUrl = PaymentUrl,
-                    AccountNumber = AccountNumber
+                    AccountNumber = AccountNumber,
+                    Confirmation = Confirmation,
+                    IsCashPayment = isCashPayment,
+                    PaymentAccountId = paymentAccountId
                 };
 
                 // If new bill is created as paid with a recurring frequency

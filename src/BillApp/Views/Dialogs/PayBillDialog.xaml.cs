@@ -1,4 +1,5 @@
 using System.Windows;
+using BillApp.ViewModels;
 
 namespace BillApp.Views.Dialogs;
 
@@ -6,14 +7,20 @@ public partial class PayBillDialog : Window
 {
     public decimal PaidAmount { get; private set; }
     public DateTime PaidDate { get; private set; }
+    public PaymentMethodItem? SelectedPaymentMethod { get; private set; }
+    public string? Confirmation { get; private set; }
 
-    public PayBillDialog(string payee, decimal amountDue, DateTime dueDate)
+    public PayBillDialog(string payee, decimal amountDue, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods)
     {
         InitializeComponent();
 
         BillInfoText.Text = payee;
         PaidAmountBox.Text = amountDue.ToString("F2");
-        PaidDatePicker.SelectedDate = dueDate;
+        PaidDatePicker.SelectedDate = DateTime.Today;
+
+        // Set up payment methods dropdown
+        PayMethodCombo.ItemsSource = paymentMethods;
+        PayMethodCombo.SelectedIndex = 0; // Default to (None)
 
         PaidAmountBox.Focus();
         PaidAmountBox.SelectAll();
@@ -38,6 +45,8 @@ public partial class PayBillDialog : Window
 
         PaidAmount = amount;
         PaidDate = PaidDatePicker.SelectedDate.Value;
+        SelectedPaymentMethod = PayMethodCombo.SelectedItem as PaymentMethodItem;
+        Confirmation = string.IsNullOrWhiteSpace(ConfirmationBox.Text) ? null : ConfirmationBox.Text.Trim();
         DialogResult = true;
     }
 

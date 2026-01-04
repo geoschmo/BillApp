@@ -26,6 +26,10 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Bill Info -->
@@ -49,10 +53,27 @@
         <DatePicker Grid.Row="4"
                     x:Name="PaidDatePicker"
                     Padding="8,6"
-                    Margin="0,0,0,20"/>
+                    Margin="0,0,0,15"/>
+
+        <!-- Pay Method -->
+        <TextBlock Grid.Row="5"
+                   Text="Pay Method:"
+                   Style="{StaticResource LabelStyle}"/>
+        <ComboBox Grid.Row="6"
+                  x:Name="PayMethodCombo"
+                  DisplayMemberPath="Name"
+                  Padding="8,6"
+                  Margin="0,0,0,15"/>
+
+        <!-- Confirmation -->
+        <TextBlock Grid.Row="7"
+                   Text="Confirmation #:"
+                   Style="{StaticResource LabelStyle}"/>
+        <TextBox Grid.Row="8"
+                 x:Name="ConfirmationBox"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="5"
+        <StackPanel Grid.Row="9"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
             <Button Content="Pay"

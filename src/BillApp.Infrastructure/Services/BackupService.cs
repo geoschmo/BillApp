@@ -213,7 +213,10 @@ public class BackupService : IBackupService
                 Notes = bill.Notes,
                 PaymentUrl = bill.PaymentUrl,
                 AccountNumber = bill.AccountNumber,
-                PreviousBillId = bill.PreviousBillId
+                PreviousBillId = bill.PreviousBillId,
+                Confirmation = bill.Confirmation,
+                PaymentAccountId = bill.PaymentAccountId,
+                IsCashPayment = bill.IsCashPayment
             });
         }
 
@@ -237,7 +240,8 @@ public class BackupService : IBackupService
                 Username = ReEncryptForBackup(account.Username, backupPassword),
                 Password = ReEncryptForBackup(account.Password, backupPassword),
                 Notes = account.Notes,
-                IsActive = account.IsActive
+                IsActive = account.IsActive,
+                IsPaymentAccount = account.IsPaymentAccount
             });
         }
 
@@ -312,7 +316,8 @@ public class BackupService : IBackupService
                 Username = ReEncryptFromBackup(dto.Username, backupPassword),
                 Password = ReEncryptFromBackup(dto.Password, backupPassword),
                 Notes = dto.Notes,
-                IsActive = dto.IsActive
+                IsActive = dto.IsActive,
+                IsPaymentAccount = dto.IsPaymentAccount
             };
             await _accountRepository.InsertAsync(account);
         }
@@ -338,7 +343,10 @@ public class BackupService : IBackupService
                 Notes = dto.Notes,
                 PaymentUrl = dto.PaymentUrl,
                 AccountNumber = dto.AccountNumber,
-                PreviousBillId = dto.PreviousBillId
+                PreviousBillId = dto.PreviousBillId,
+                Confirmation = dto.Confirmation,
+                PaymentAccountId = dto.PaymentAccountId,
+                IsCashPayment = dto.IsCashPayment
             };
             await _billRepository.InsertAsync(bill);
         }
