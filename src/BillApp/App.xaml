@@ -10,7 +10,8 @@
              xmlns:secureViews="clr-namespace:BillApp.Views.SecureNotes"
              xmlns:reportViews="clr-namespace:BillApp.Views.Reports"
              xmlns:settingViews="clr-namespace:BillApp.Views.Settings"
-             xmlns:converters="clr-namespace:BillApp.Converters">
+             xmlns:converters="clr-namespace:BillApp.Converters"
+             ShutdownMode="OnExplicitShutdown">
     <!--
     Note: No StartupUri - we handle startup manually in App.xaml.cs
     This allows us to use DI to create the MainWindow

@@ -7,6 +7,7 @@ using BillApp.Infrastructure.Security;
 using BillApp.Infrastructure.Services;
 using BillApp.Services;
 using BillApp.ViewModels;
+using BillApp.Views.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BillApp;
@@ -88,9 +89,35 @@ public partial class App : Application
         var migrator = _serviceProvider.GetRequiredService<DatabaseMigrator>();
         migrator.MigrateIfNeeded();
 
-        // Initialize database with default data
+        // Initialize database - check if this is first run
         var dbInitializer = _serviceProvider.GetRequiredService<DatabaseInitializer>();
-        dbInitializer.SeedDefaultCategories();
+
+        if (dbInitializer.IsFreshDatabase())
+        {
+            // Show first-run dialog to let user choose empty or sample data
+            var setupDialog = new DatabaseSetupDialog();
+            if (setupDialog.ShowDialog() == true)
+            {
+                if (setupDialog.UseSampleData)
+                {
+                    dbInitializer.SeedSampleData();
+                }
+                else
+                {
+                    dbInitializer.SeedDefaultCategories();
+                }
+            }
+            else
+            {
+                // User closed dialog without choosing - just seed default categories
+                dbInitializer.SeedDefaultCategories();
+            }
+        }
+        else
+        {
+            // Existing database - just ensure categories exist
+            dbInitializer.SeedDefaultCategories();
+        }
 
         // Get MainWindow from DI container
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
@@ -118,6 +145,10 @@ public partial class App : Application
         // Start auto-backup service
         var autoBackupService = _serviceProvider.GetRequiredService<IAutoBackupService>();
         autoBackupService.Start();
+
+        // Set main window and switch shutdown mode so app closes when main window closes
+        MainWindow = mainWindow;
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
 
         mainWindow.Show();
     }
