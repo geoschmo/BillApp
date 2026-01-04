@@ -157,7 +157,8 @@
                         BorderBrush="#DDDDDD"
                         BorderThickness="1"
                         CornerRadius="4"
-                        Padding="15">
+                        Padding="15"
+                        Margin="0,0,0,20">
                     <StackPanel>
                         <TextBlock Text="About Backups"
                                    FontWeight="SemiBold"
@@ -170,6 +171,48 @@
                         </TextBlock>
                     </StackPanel>
                 </Border>
+
+                <!-- Database Section -->
+                <GroupBox Header="Database">
+                    <StackPanel>
+                        <TextBlock Text="Database Location"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding DatabaseFolder, Mode=OneWay}"
+                                     IsReadOnly="True"
+                                     Padding="8,6"/>
+                            <Button Grid.Column="1"
+                                    Content="Open"
+                                    Command="{Binding OpenDatabaseFolderCommand}"
+                                    Padding="12,6"
+                                    Margin="10,0,0,0"/>
+                        </Grid>
+
+                        <Border Background="#FFF3E0"
+                                BorderBrush="#FFB74D"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="15">
+                            <StackPanel>
+                                <TextBlock Text="Reset Application"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,10"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="#5D4037">
+                                    <Run Text="To completely reset BillApp and start fresh, close the application and delete the "/>
+                                    <Run Text="billapp.db" FontWeight="SemiBold"/>
+                                    <Run Text=" file from the database folder above. The next time you open BillApp, you'll be prompted to create a new database."/>
+                                    <LineBreak/><LineBreak/>
+                                    <Run Text="Note: This will permanently delete all your bills, accounts, and categories. Create a backup first if you want to preserve your data." FontStyle="Italic"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </GroupBox>
             </StackPanel>
         </Grid>
     </ScrollViewer>

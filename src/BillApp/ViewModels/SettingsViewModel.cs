@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using BillApp.Core.Exceptions;
 using BillApp.Core.Interfaces.Services;
+using BillApp.Infrastructure.Data;
 using BillApp.Infrastructure.Services;
 using BillApp.Services;
 using BillApp.Settings;
@@ -45,6 +46,8 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _isRestoring;
 
     public BackupFrequency[] FrequencyOptions => Enum.GetValues<BackupFrequency>();
+
+    public string DatabaseFolder => Path.GetDirectoryName(LiteDbContext.GetDefaultDatabasePath()) ?? string.Empty;
 
     public SettingsViewModel(IBackupService backupService, ISettingsService settingsService)
     {
@@ -268,6 +271,15 @@ public partial class SettingsViewModel : ViewModelBase
                 "Folder Not Found",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+    }
+
+    [RelayCommand]
+    private void OpenDatabaseFolder()
+    {
+        if (Directory.Exists(DatabaseFolder))
+        {
+            System.Diagnostics.Process.Start("explorer.exe", DatabaseFolder);
         }
     }
 
