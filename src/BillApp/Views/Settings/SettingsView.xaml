@@ -172,6 +172,51 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Import Data Section -->
+                <GroupBox Header="Import Data">
+                    <StackPanel>
+                        <TextBlock Text="Import from CSV"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,0,0,15">
+                            Import accounts and bills from a CSV file. You can choose to add to existing data or replace all existing data.
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Import from CSV..."
+                                    Command="{Binding ImportDataCommand}"
+                                    Padding="15,8"/>
+                            <TextBlock Text="Importing..."
+                                       VerticalAlignment="Center"
+                                       Margin="15,0,0,0"
+                                       Foreground="Gray"
+                                       Visibility="{Binding IsImporting, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- CSV Template Info -->
+                        <Border Background="#E3F2FD"
+                                BorderBrush="#90CAF9"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="15"
+                                Margin="0,15,0,0">
+                            <StackPanel>
+                                <TextBlock Text="CSV Template Columns"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,10"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="#1565C0" FontFamily="Consolas" FontSize="11">
+                                    AccountName, AccountNumber, InterestRate, AccountType, IsActive, IsPaymentAccount, Frequency, AmountDue, AmountPaid, Balance, Confirmation, DueDate, PaidDate, PaymentMethod
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,10,0,0" FontSize="11">
+                                    <Run Text="Required:" FontWeight="SemiBold"/> AccountName, DueDate
+                                    <LineBreak/>
+                                    <Run Text="Frequency values:" FontWeight="SemiBold"/> None, Weekly, BiWeekly, Monthly, Quarterly, Annually
+                                    <LineBreak/>
+                                    <Run Text="AccountType values:" FontWeight="SemiBold"/> Checking, Savings, CreditCard, Loan, Other
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </GroupBox>
+
                 <!-- Database Section -->
                 <GroupBox Header="Database">
                     <StackPanel>

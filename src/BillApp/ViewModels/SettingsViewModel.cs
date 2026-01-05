@@ -16,6 +16,7 @@ namespace BillApp.ViewModels;
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly IBackupService _backupService;
+    private readonly IImportService _importService;
     private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
@@ -45,13 +46,17 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRestoring;
 
+    [ObservableProperty]
+    private bool _isImporting;
+
     public BackupFrequency[] FrequencyOptions => Enum.GetValues<BackupFrequency>();
 
     public string DatabaseFolder => Path.GetDirectoryName(LiteDbContext.GetDefaultDatabasePath()) ?? string.Empty;
 
-    public SettingsViewModel(IBackupService backupService, ISettingsService settingsService)
+    public SettingsViewModel(IBackupService backupService, IImportService importService, ISettingsService settingsService)
     {
         _backupService = backupService;
+        _importService = importService;
         _settingsService = settingsService;
     }
 
@@ -271,6 +276,53 @@ public partial class SettingsViewModel : ViewModelBase
                 "Folder Not Found",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportDataAsync()
+    {
+        // Prompt for backup first
+        var backupResult = MessageBox.Show(
+            "It's recommended to create a backup before importing data.\n\nWould you like to create a backup now?",
+            "Create Backup First?",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Question);
+
+        if (backupResult == MessageBoxResult.Cancel)
+            return;
+
+        if (backupResult == MessageBoxResult.Yes)
+        {
+            await CreateBackupAsync();
+
+            // If backup failed or was cancelled, abort import
+            if (IsBackingUp)
+                return;
+        }
+
+        // Show import dialog
+        var importDialog = new ImportDialog(_importService);
+        importDialog.Owner = Application.Current.MainWindow;
+
+        if (importDialog.ShowDialog() == true && importDialog.ExecutionResult?.Success == true)
+        {
+            var result = importDialog.ExecutionResult;
+            var message = $"Import completed successfully!\n\n" +
+                         $"Accounts created: {result.AccountsCreated}\n" +
+                         $"Bills created: {result.BillsCreated}\n" +
+                         $"Payment accounts created: {result.PaymentAccountsCreated}\n\n" +
+                         $"The application will now restart to apply changes.";
+
+            MessageBox.Show(
+                message,
+                "Import Complete",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            // Restart application
+            System.Diagnostics.Process.Start(Environment.ProcessPath!);
+            Application.Current.Shutdown();
         }
     }
 

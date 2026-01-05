@@ -15,16 +15,18 @@ A Windows desktop application for personal finance management, built with WPF an
 - Recurring bills (Weekly, Bi-weekly, Monthly, Quarterly, Semi-annually, Annually)
 - Auto-create next occurrence when a recurring bill is marked as paid
 - New recurring bills carry forward reduced balance (previous balance minus payment)
-- Pay dialog for entering payment amount and date
+- Pay dialog with payment amount, date, pay method, and confirmation number
+- Track payment method (Cash or designated payment account)
 - Inline editing directly in the bill list
 - Filter and search bills (defaults to showing Active bills only)
-- Link bills to payment accounts (balance syncs automatically)
+- Link bills to accounts (balance syncs automatically)
 
 **Account Management**
 - Track all financial account types (Checking, Savings, Credit Card, Investment, Loan, Other)
 - Store account details: name, institution, account number, balance
 - Credit card specific fields: credit limit, interest rate (APR)
 - Online access credentials (encrypted): login URL, username, password
+- Designate accounts as payment methods (appear in pay method dropdown)
 - Summary dashboard showing total assets, liabilities, and net worth
 - Account balance syncs with linked bill balance
 - Filter accounts by type and search by name
@@ -37,6 +39,20 @@ A Windows desktop application for personal finance management, built with WPF an
 - Backup retention settings (max count and age limits)
 - Portable backups work on any PC (credentials re-encrypted for portability)
 - Backup files stored in configurable location
+
+**Data Import**
+- Import accounts and bills from CSV files
+- Pre-import validation with detailed error/warning report
+- Import modes: Add to existing data or Replace all
+- Smart account deduplication (by name + account number)
+- Auto-create payment accounts referenced in CSV
+- Flexible parsing (handles various date formats, currency symbols)
+- Backup prompt before import for safety
+
+**First-Run Setup**
+- Database setup dialog on first launch
+- Option to start with empty database or sample data
+- Sample data includes example accounts and bills for testing
 
 **Security**
 - AES-256 encrypted database (LiteDB with password protection)

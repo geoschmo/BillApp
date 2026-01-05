@@ -60,6 +60,7 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IAutoBackupService, AutoBackupService>();
+        services.AddSingleton<IImportService, CsvImportService>();
 
         // ViewModels (transient = new instance each time)
         services.AddTransient<MainWindowViewModel>();
