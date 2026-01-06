@@ -25,6 +25,7 @@
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:PaymentStatusToVisibilityConverter x:Key="PaidVisibilityConverter"/>
+            <converters:PaidStatusToVisibilityConverter x:Key="ShowForPaidConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
 
             <!--

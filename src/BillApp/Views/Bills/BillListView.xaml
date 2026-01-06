@@ -86,10 +86,11 @@
                   ItemsSource="{Binding Bills}"
                   SelectedItem="{Binding SelectedBill}"
                   AutoGenerateColumns="False"
-                  IsReadOnly="False"
+                  IsReadOnly="True"
                   SelectionMode="Single"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
+                  CanUserSortColumns="True"
                   GridLinesVisibility="Horizontal"
                   HeadersVisibility="Column"
                   BorderThickness="1"
@@ -132,53 +133,30 @@
                 </DataGridTextColumn>
 
                 <!-- Due Date -->
-                <DataGridTemplateColumn Header="Due Date" Width="120">
+                <DataGridTemplateColumn Header="Due Date" Width="120" SortMemberPath="DueDate">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding DueDate, StringFormat=d}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate>
-                            <DatePicker SelectedDate="{Binding DueDate, UpdateSourceTrigger=PropertyChanged}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <!-- Category -->
-                <DataGridTemplateColumn Header="Category" Width="110">
+                <DataGridTemplateColumn Header="Category" Width="110" SortMemberPath="Category.Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Category.Name}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate>
-                            <ComboBox ItemsSource="{Binding DataContext.Categories, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                      SelectedValue="{Binding CategoryId, UpdateSourceTrigger=PropertyChanged}"
-                                      SelectedValuePath="Id"
-                                      DisplayMemberPath="Name"
-                                      Padding="5"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <!-- Account -->
-                <DataGridTemplateColumn Header="Account" Width="110">
+                <DataGridTemplateColumn Header="Account" Width="110" SortMemberPath="Account.Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Account.Name}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate>
-                            <ComboBox ItemsSource="{Binding DataContext.Accounts, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                      SelectedValue="{Binding AccountId, UpdateSourceTrigger=PropertyChanged}"
-                                      SelectedValuePath="Id"
-                                      DisplayMemberPath="Name"
-                                      Padding="5"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <!-- Status with color coding -->
@@ -209,13 +187,6 @@
                             </Border>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate>
-                            <ComboBox ItemsSource="{Binding DataContext.StatusOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                      SelectedItem="{Binding Status, UpdateSourceTrigger=PropertyChanged}"
-                                      Padding="5"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <!-- Frequency -->
@@ -225,17 +196,10 @@
                             <TextBlock Text="{Binding Frequency}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate>
-                            <ComboBox ItemsSource="{Binding DataContext.FrequencyOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                      SelectedItem="{Binding Frequency, UpdateSourceTrigger=PropertyChanged}"
-                                      Padding="5"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <!-- Actions -->
-                <DataGridTemplateColumn Header="Actions" Width="180">
+                <DataGridTemplateColumn Header="Actions" Width="200">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -256,6 +220,18 @@
                                         BorderThickness="0"
                                         Cursor="Hand"
                                         Visibility="{Binding Status, Converter={StaticResource PaidVisibilityConverter}}"/>
+
+                                <Button Content="New"
+                                        Command="{Binding DataContext.CreateNewBillFromExistingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Padding="8,4"
+                                        Margin="0,0,5,0"
+                                        Background="#2196F3"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        ToolTip="Create a new bill based on this one"
+                                        Visibility="{Binding Status, Converter={StaticResource ShowForPaidConverter}}"/>
 
                                 <Button Content="Delete"
                                         Command="{Binding DataContext.DeleteBillCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"

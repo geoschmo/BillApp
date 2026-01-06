@@ -227,6 +227,72 @@ public partial class BillListViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task CreateNewBillFromExistingAsync(Bill? bill)
+    {
+        if (bill == null) return;
+
+        // Calculate suggested values based on the existing bill
+        var suggestedDueDate = bill.Frequency switch
+        {
+            RecurrenceFrequency.Weekly => bill.DueDate.AddDays(7),
+            RecurrenceFrequency.BiWeekly => bill.DueDate.AddDays(14),
+            RecurrenceFrequency.Monthly => bill.DueDate.AddMonths(1),
+            RecurrenceFrequency.Quarterly => bill.DueDate.AddMonths(3),
+            RecurrenceFrequency.SemiAnnually => bill.DueDate.AddMonths(6),
+            RecurrenceFrequency.Annually => bill.DueDate.AddYears(1),
+            _ => DateTime.Today.AddMonths(1) // Default to one month from today for non-recurring
+        };
+
+        var suggestedAmountDue = bill.AmountDue;
+        var suggestedBalance = bill.Balance - bill.AmountPaid; // Carry forward reduced balance
+
+        // Show the dialog
+        var dialog = new NewBillFromExistingDialog(
+            bill.Payee,
+            suggestedDueDate,
+            suggestedAmountDue,
+            suggestedBalance < 0 ? 0 : suggestedBalance);
+        dialog.Owner = Application.Current.MainWindow;
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        // Create the new bill
+        var newBill = new Bill
+        {
+            Payee = bill.Payee,
+            AmountDue = dialog.AmountDue,
+            AmountPaid = 0,
+            Balance = dialog.Balance,
+            DueDate = dialog.DueDate,
+            Status = PaymentStatus.Pending,
+            Frequency = bill.Frequency,
+            CategoryId = bill.CategoryId,
+            AccountId = bill.AccountId,
+            Notes = bill.Notes,
+            PaymentUrl = bill.PaymentUrl,
+            AccountNumber = bill.AccountNumber,
+            PreviousBillId = bill.Id
+        };
+
+        await _billRepository.InsertAsync(newBill);
+
+        // Update linked account balance if applicable
+        if (newBill.AccountId.HasValue && newBill.AccountId.Value != Guid.Empty)
+        {
+            var account = await _accountRepository.GetByIdAsync(newBill.AccountId.Value);
+            if (account != null)
+            {
+                account.Balance = newBill.Balance;
+                await _accountRepository.UpdateAsync(account);
+            }
+        }
+
+        // Refresh the list to show the new bill
+        await LoadBillsAsync();
+    }
+
+    [RelayCommand]
     private async Task ApplyFilterAsync()
     {
         await LoadBillsAsync();

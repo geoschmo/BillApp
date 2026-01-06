@@ -1,0 +1,80 @@
+<Window x:Class="BillApp.Views.Dialogs.NewBillFromExistingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create New Bill"
+        Width="350"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Bill Info -->
+        <TextBlock Grid.Row="0"
+                   x:Name="BillInfoText"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,20"/>
+
+        <!-- Due Date -->
+        <TextBlock Grid.Row="1"
+                   Text="Due Date:"
+                   Style="{StaticResource LabelStyle}"/>
+        <DatePicker Grid.Row="2"
+                    x:Name="DueDatePicker"
+                    Padding="8,6"
+                    Margin="0,0,0,15"/>
+
+        <!-- Amount Due -->
+        <TextBlock Grid.Row="3"
+                   Text="Amount Due:"
+                   Style="{StaticResource LabelStyle}"/>
+        <TextBox Grid.Row="4"
+                 x:Name="AmountDueBox"/>
+
+        <!-- Balance -->
+        <TextBlock Grid.Row="5"
+                   Text="Balance:"
+                   Style="{StaticResource LabelStyle}"/>
+        <TextBox Grid.Row="6"
+                 x:Name="BalanceBox"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="7"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="Create"
+                    Width="80"
+                    Padding="8,6"
+                    Margin="0,0,10,0"
+                    IsDefault="True"
+                    Click="CreateButton_Click"/>
+            <Button Content="Cancel"
+                    Width="80"
+                    Padding="8,6"
+                    IsCancel="True"
+                    Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
