@@ -15,6 +15,7 @@ public partial class BillListViewModel : ViewModelBase
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IAccountRepository _accountRepository;
+    private readonly IPayeeRepository _payeeRepository;
     private readonly INavigationService _navigationService;
 
     // Track original status for inline editing to detect status changes
@@ -28,6 +29,9 @@ public partial class BillListViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<Account> _accounts = new();
+
+    [ObservableProperty]
+    private ObservableCollection<Payee> _payees = new();
 
     [ObservableProperty]
     private Bill? _selectedBill;
@@ -45,11 +49,13 @@ public partial class BillListViewModel : ViewModelBase
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
         IAccountRepository accountRepository,
+        IPayeeRepository payeeRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
         _accountRepository = accountRepository;
+        _payeeRepository = payeeRepository;
         _navigationService = navigationService;
     }
 
@@ -79,6 +85,10 @@ public partial class BillListViewModel : ViewModelBase
             accountList.AddRange(accounts);
             Accounts = new ObservableCollection<Account>(accountList);
 
+            // Load payees
+            var payees = await _payeeRepository.GetAllAsync();
+            Payees = new ObservableCollection<Payee>(payees);
+
             // Load all bills
             await LoadBillsAsync();
         }
@@ -97,18 +107,35 @@ public partial class BillListViewModel : ViewModelBase
         // Materialize the list to avoid lazy evaluation issues
         var bills = (await _billRepository.GetAllAsync()).ToList();
 
-        // Load category and account for each bill and track original statuses
+        // Build lookup dictionaries
+        var payeeLookup = Payees.ToDictionary(p => p.Id);
+        var categoryLookup = Categories.ToDictionary(c => c.Id);
+        var accountLookup = Accounts.Where(a => a.Id != Guid.Empty).ToDictionary(a => a.Id);
+
+        // Load payee, category, and account for each bill and track original statuses
         _originalStatuses.Clear();
         foreach (var bill in bills)
         {
-            if (bill.CategoryId.HasValue && bill.CategoryId.Value != Guid.Empty)
+            // Load payee
+            if (payeeLookup.TryGetValue(bill.PayeeId, out var payee))
             {
-                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId.Value);
+                bill.Payee = payee;
+                // Also load payee's category
+                if (payee.CategoryId.HasValue && categoryLookup.TryGetValue(payee.CategoryId.Value, out var payeeCategory))
+                {
+                    payee.Category = payeeCategory;
+                }
             }
+
+            // Load account
             if (bill.AccountId.HasValue && bill.AccountId.Value != Guid.Empty)
             {
-                bill.Account = Accounts.FirstOrDefault(a => a.Id == bill.AccountId.Value);
+                if (accountLookup.TryGetValue(bill.AccountId.Value, out var account))
+                {
+                    bill.Account = account;
+                }
             }
+
             _originalStatuses[bill.Id] = bill.Status;
         }
 
@@ -118,7 +145,7 @@ public partial class BillListViewModel : ViewModelBase
         if (!string.IsNullOrWhiteSpace(FilterText))
         {
             filtered = filtered.Where(b =>
-                b.Payee.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
+                (b.Payee?.Name.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (b.Notes?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
@@ -134,7 +161,7 @@ public partial class BillListViewModel : ViewModelBase
 
         if (FilterCategoryId.HasValue)
         {
-            filtered = filtered.Where(b => b.CategoryId == FilterCategoryId.Value);
+            filtered = filtered.Where(b => b.Payee?.CategoryId == FilterCategoryId.Value);
         }
 
         // Sort by due date
@@ -183,7 +210,8 @@ public partial class BillListViewModel : ViewModelBase
             .Select(a => new PaymentMethodItem { AccountId = a.Id, Name = a.Name }));
 
         // Show pay dialog with default values
-        var dialog = new PayBillDialog(bill.Payee, bill.AmountDue, bill.DueDate, paymentMethods);
+        var payeeName = bill.Payee?.Name ?? "Unknown";
+        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.DueDate, paymentMethods);
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() != true)
@@ -247,8 +275,9 @@ public partial class BillListViewModel : ViewModelBase
         var suggestedBalance = bill.Balance - bill.AmountPaid; // Carry forward reduced balance
 
         // Show the dialog
+        var payeeName = bill.Payee?.Name ?? "Unknown";
         var dialog = new NewBillFromExistingDialog(
-            bill.Payee,
+            payeeName,
             suggestedDueDate,
             suggestedAmountDue,
             suggestedBalance < 0 ? 0 : suggestedBalance);
@@ -260,18 +289,15 @@ public partial class BillListViewModel : ViewModelBase
         // Create the new bill
         var newBill = new Bill
         {
-            Payee = bill.Payee,
+            PayeeId = bill.PayeeId,
             AmountDue = dialog.AmountDue,
             AmountPaid = 0,
             Balance = dialog.Balance,
             DueDate = dialog.DueDate,
             Status = PaymentStatus.Pending,
             Frequency = bill.Frequency,
-            CategoryId = bill.CategoryId,
             AccountId = bill.AccountId,
             Notes = bill.Notes,
-            PaymentUrl = bill.PaymentUrl,
-            AccountNumber = bill.AccountNumber,
             PreviousBillId = bill.Id
         };
 
@@ -327,16 +353,6 @@ public partial class BillListViewModel : ViewModelBase
                 {
                     bill.AmountPaid = bill.AmountDue;
                 }
-            }
-
-            // Update the category reference
-            if (bill.CategoryId.HasValue)
-            {
-                bill.Category = Categories.FirstOrDefault(c => c.Id == bill.CategoryId.Value);
-            }
-            else
-            {
-                bill.Category = null;
             }
 
             // Update the account reference - convert Guid.Empty to null (the "None" option)

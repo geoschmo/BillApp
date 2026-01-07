@@ -99,7 +99,7 @@
 
             <DataGrid.Columns>
                 <!-- Payee -->
-                <DataGridTextColumn Header="Payee" Binding="{Binding Payee, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="120"/>
+                <DataGridTextColumn Header="Payee" Binding="{Binding Payee.Name}" Width="*" MinWidth="120"/>
 
                 <!-- Amount Due -->
                 <DataGridTextColumn Header="Due" Binding="{Binding AmountDue, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
@@ -142,10 +142,10 @@
                 </DataGridTemplateColumn>
 
                 <!-- Category -->
-                <DataGridTemplateColumn Header="Category" Width="110" SortMemberPath="Category.Name">
+                <DataGridTemplateColumn Header="Category" Width="110" SortMemberPath="Payee.Category.Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Category.Name}" Padding="5,0"/>
+                            <TextBlock Text="{Binding Payee.Category.Name}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

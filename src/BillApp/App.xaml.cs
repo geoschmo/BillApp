@@ -54,6 +54,7 @@ public partial class App : Application
         services.AddTransient<IBillRepository, BillRepository>();
         services.AddTransient<ICategoryRepository, CategoryRepository>();
         services.AddTransient<IAccountRepository, AccountRepository>();
+        services.AddTransient<IPayeeRepository, PayeeRepository>();
 
         // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();

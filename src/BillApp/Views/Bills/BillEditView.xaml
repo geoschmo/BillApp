@@ -6,7 +6,7 @@
              xmlns:vm="clr-namespace:BillApp.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:BillEditViewModel}"
-             d:DesignHeight="500" d:DesignWidth="900">
+             d:DesignHeight="600" d:DesignWidth="900">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -34,158 +34,186 @@
         </Border>
 
         <!-- Two Column Form -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="30"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Left Column -->
-            <StackPanel Grid.Column="0">
-                <!-- Payee -->
-                <TextBlock Text="Payee *" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding Payee, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="10"
-                         Margin="0,0,0,15"/>
+                <!-- Left Column - Payee Details -->
+                <StackPanel Grid.Column="0">
+                    <!-- Payee Section Header -->
+                    <TextBlock Text="Payee" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
-                <!-- Amount Fields -->
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Amount Due" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Grid.Column="0" Grid.Row="1"
-                             Text="{Binding AmountDue, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                             Padding="10"/>
-
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Amount Paid" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Grid.Column="2" Grid.Row="1"
-                             Text="{Binding AmountPaid, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                             Padding="10"/>
-
-                    <TextBlock Grid.Column="4" Grid.Row="0" Text="Balance" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Grid.Column="4" Grid.Row="1"
-                             Text="{Binding Balance, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                             Padding="10"/>
-                </Grid>
-
-                <!-- Due Date and Paid Date -->
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Due Date" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <DatePicker Grid.Column="0" Grid.Row="1"
-                                SelectedDate="{Binding DueDate}"
-                                Padding="10"/>
-
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Paid Date" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <DatePicker Grid.Column="2" Grid.Row="1"
-                                SelectedDate="{Binding PaidDate}"
-                                Padding="10"/>
-                </Grid>
-
-                <!-- Pay Method and Confirmation -->
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Pay Method" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <ComboBox Grid.Column="0" Grid.Row="1"
-                              ItemsSource="{Binding PaymentMethods}"
-                              SelectedItem="{Binding SelectedPaymentMethod}"
+                    <!-- Existing Payee Dropdown -->
+                    <TextBlock Text="Select Payee" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Payees}"
+                              SelectedItem="{Binding SelectedPayee}"
                               DisplayMemberPath="Name"
-                              Padding="10"/>
+                              Padding="10"
+                              Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Confirmation #" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <TextBox Grid.Column="2" Grid.Row="1"
-                             Text="{Binding Confirmation, UpdateSourceTrigger=PropertyChanged}"
-                             Padding="10"/>
-                </Grid>
+                    <!-- Or New Payee Name -->
+                    <TextBlock Text="Or Enter New Payee Name" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding NewPayeeName, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="10"
+                             Margin="0,0,0,15"/>
 
-                <!-- Category and Status -->
-                <Grid Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                    <!-- Payee Details (Category, Payment URL, Account Number) -->
+                    <Border Background="#F5F5F5" Padding="10" CornerRadius="4" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="Payee Details" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Category" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <ComboBox Grid.Column="0" Grid.Row="1"
-                              ItemsSource="{Binding Categories}"
-                              SelectedValue="{Binding CategoryId}"
-                              SelectedValuePath="Id"
-                              DisplayMemberPath="Name"
-                              Padding="10"/>
+                            <TextBlock Text="Category" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <ComboBox ItemsSource="{Binding Categories}"
+                                      SelectedValue="{Binding PayeeCategoryId}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="Name"
+                                      Padding="10"
+                                      Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Column="2" Grid.Row="0" Text="Status" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                    <ComboBox Grid.Column="2" Grid.Row="1"
-                              ItemsSource="{Binding StatusOptions}"
-                              SelectedItem="{Binding Status}"
-                              Padding="10"/>
-                </Grid>
-            </StackPanel>
+                            <TextBlock Text="Payment URL" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding PayeePaymentUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="10"
+                                     Margin="0,0,0,10"/>
 
-            <!-- Right Column -->
-            <StackPanel Grid.Column="2">
-                <!-- Recurrence -->
-                <TextBlock Text="Recurrence" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding FrequencyOptions}"
-                          SelectedItem="{Binding Frequency}"
-                          Padding="10"
-                          Margin="0,0,0,15"/>
+                            <TextBlock Text="Account/Reference Number" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding PayeeAccountNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="10"
+                                     Margin="0,0,0,10"/>
 
-                <!-- Payment URL -->
-                <TextBlock Text="Payment URL" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding PaymentUrl, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="10"
-                         Margin="0,0,0,15"/>
+                            <TextBlock Text="Payee Notes" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding PayeeNotes, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="10"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     Height="60"
+                                     VerticalScrollBarVisibility="Auto"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
-                <!-- Account Number -->
-                <TextBlock Text="Account/Reference Number" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding AccountNumber, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="10"
-                         Margin="0,0,0,15"/>
+                <!-- Right Column - Bill Details -->
+                <StackPanel Grid.Column="2">
+                    <!-- Bill Section Header -->
+                    <TextBlock Text="Bill Details" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
 
-                <!-- Notes -->
-                <TextBlock Text="Notes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="10"
-                         TextWrapping="Wrap"
-                         AcceptsReturn="True"
-                         Height="100"
-                         VerticalScrollBarVisibility="Auto"/>
-            </StackPanel>
-        </Grid>
+                    <!-- Amount Fields -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Amount Due" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Grid.Column="0" Grid.Row="1"
+                                 Text="{Binding AmountDue, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                                 Padding="10"/>
+
+                        <TextBlock Grid.Column="2" Grid.Row="0" Text="Amount Paid" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Grid.Column="2" Grid.Row="1"
+                                 Text="{Binding AmountPaid, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                                 Padding="10"/>
+
+                        <TextBlock Grid.Column="4" Grid.Row="0" Text="Balance" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Grid.Column="4" Grid.Row="1"
+                                 Text="{Binding Balance, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                                 Padding="10"/>
+                    </Grid>
+
+                    <!-- Due Date and Paid Date -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Due Date" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <DatePicker Grid.Column="0" Grid.Row="1"
+                                    SelectedDate="{Binding DueDate}"
+                                    Padding="10"/>
+
+                        <TextBlock Grid.Column="2" Grid.Row="0" Text="Paid Date" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <DatePicker Grid.Column="2" Grid.Row="1"
+                                    SelectedDate="{Binding PaidDate}"
+                                    Padding="10"/>
+                    </Grid>
+
+                    <!-- Status and Recurrence -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Status" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <ComboBox Grid.Column="0" Grid.Row="1"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding Status}"
+                                  Padding="10"/>
+
+                        <TextBlock Grid.Column="2" Grid.Row="0" Text="Recurrence" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <ComboBox Grid.Column="2" Grid.Row="1"
+                                  ItemsSource="{Binding FrequencyOptions}"
+                                  SelectedItem="{Binding Frequency}"
+                                  Padding="10"/>
+                    </Grid>
+
+                    <!-- Pay Method and Confirmation -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Pay Method" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <ComboBox Grid.Column="0" Grid.Row="1"
+                                  ItemsSource="{Binding PaymentMethods}"
+                                  SelectedItem="{Binding SelectedPaymentMethod}"
+                                  DisplayMemberPath="Name"
+                                  Padding="10"/>
+
+                        <TextBlock Grid.Column="2" Grid.Row="0" Text="Confirmation #" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBox Grid.Column="2" Grid.Row="1"
+                                 Text="{Binding Confirmation, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="10"/>
+                    </Grid>
+
+                    <!-- Bill Notes -->
+                    <TextBlock Text="Bill Notes" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="10"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="80"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="3"

@@ -9,7 +9,7 @@ namespace BillApp.Core.Interfaces.Repositories;
 public interface IBillRepository : IRepository<Bill>
 {
     Task<IEnumerable<Bill>> GetByStatusAsync(PaymentStatus status);
-    Task<IEnumerable<Bill>> GetByCategoryAsync(Guid categoryId);
+    Task<IEnumerable<Bill>> GetByPayeeAsync(Guid payeeId);
     Task<IEnumerable<Bill>> GetUpcomingAsync(int days);
     Task<IEnumerable<Bill>> GetOverdueAsync();
     Task<IEnumerable<Bill>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);

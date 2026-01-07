@@ -18,6 +18,7 @@ public class BackupService : IBackupService
     private readonly IBillRepository _billRepository;
     private readonly IAccountRepository _accountRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IPayeeRepository _payeeRepository;
     private readonly IEncryptionService _encryptionService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -29,11 +30,13 @@ public class BackupService : IBackupService
         IBillRepository billRepository,
         IAccountRepository accountRepository,
         ICategoryRepository categoryRepository,
+        IPayeeRepository payeeRepository,
         IEncryptionService encryptionService)
     {
         _billRepository = billRepository;
         _accountRepository = accountRepository;
         _categoryRepository = categoryRepository;
+        _payeeRepository = payeeRepository;
         _encryptionService = encryptionService;
     }
 
@@ -200,7 +203,7 @@ public class BackupService : IBackupService
                 Id = bill.Id,
                 CreatedAt = bill.CreatedAt,
                 UpdatedAt = bill.UpdatedAt,
-                Payee = bill.Payee,
+                PayeeId = bill.PayeeId,
                 AmountDue = bill.AmountDue,
                 AmountPaid = bill.AmountPaid,
                 Balance = bill.Balance,
@@ -208,11 +211,8 @@ public class BackupService : IBackupService
                 Status = (int)bill.Status,
                 PaidDate = bill.PaidDate,
                 Frequency = (int)bill.Frequency,
-                CategoryId = bill.CategoryId,
                 AccountId = bill.AccountId,
                 Notes = bill.Notes,
-                PaymentUrl = bill.PaymentUrl,
-                AccountNumber = bill.AccountNumber,
                 PreviousBillId = bill.PreviousBillId,
                 Confirmation = bill.Confirmation,
                 PaymentAccountId = bill.PaymentAccountId,
@@ -261,6 +261,23 @@ public class BackupService : IBackupService
             });
         }
 
+        // Export payees
+        var payees = await _payeeRepository.GetAllAsync();
+        foreach (var payee in payees)
+        {
+            backupData.Payees.Add(new PayeeBackupDto
+            {
+                Id = payee.Id,
+                CreatedAt = payee.CreatedAt,
+                UpdatedAt = payee.UpdatedAt,
+                Name = payee.Name,
+                CategoryId = payee.CategoryId,
+                PaymentUrl = payee.PaymentUrl,
+                AccountNumber = payee.AccountNumber,
+                Notes = payee.Notes
+            });
+        }
+
         return backupData;
     }
 
@@ -272,6 +289,10 @@ public class BackupService : IBackupService
         var existingBills = (await _billRepository.GetAllAsync()).ToList();
         foreach (var bill in existingBills)
             await _billRepository.DeleteAsync(bill.Id);
+
+        var existingPayees = (await _payeeRepository.GetAllAsync()).ToList();
+        foreach (var payee in existingPayees)
+            await _payeeRepository.DeleteAsync(payee.Id);
 
         var existingAccounts = (await _accountRepository.GetAllAsync()).ToList();
         foreach (var account in existingAccounts)
@@ -322,6 +343,23 @@ public class BackupService : IBackupService
             await _accountRepository.InsertAsync(account);
         }
 
+        // Import payees
+        foreach (var dto in backupData.Payees)
+        {
+            var payee = new Payee
+            {
+                Id = dto.Id,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt,
+                Name = dto.Name,
+                CategoryId = dto.CategoryId,
+                PaymentUrl = dto.PaymentUrl,
+                AccountNumber = dto.AccountNumber,
+                Notes = dto.Notes
+            };
+            await _payeeRepository.InsertAsync(payee);
+        }
+
         // Import bills
         foreach (var dto in backupData.Bills)
         {
@@ -330,7 +368,7 @@ public class BackupService : IBackupService
                 Id = dto.Id,
                 CreatedAt = dto.CreatedAt,
                 UpdatedAt = dto.UpdatedAt,
-                Payee = dto.Payee,
+                PayeeId = dto.PayeeId,
                 AmountDue = dto.AmountDue,
                 AmountPaid = dto.AmountPaid,
                 Balance = dto.Balance,
@@ -338,11 +376,8 @@ public class BackupService : IBackupService
                 Status = (PaymentStatus)dto.Status,
                 PaidDate = dto.PaidDate,
                 Frequency = (RecurrenceFrequency)dto.Frequency,
-                CategoryId = dto.CategoryId,
                 AccountId = dto.AccountId,
                 Notes = dto.Notes,
-                PaymentUrl = dto.PaymentUrl,
-                AccountNumber = dto.AccountNumber,
                 PreviousBillId = dto.PreviousBillId,
                 Confirmation = dto.Confirmation,
                 PaymentAccountId = dto.PaymentAccountId,
@@ -407,7 +442,8 @@ public class BackupService : IBackupService
             {
                 Bills = backupData.Bills.Count,
                 Accounts = backupData.Accounts.Count,
-                Categories = backupData.Categories.Count
+                Categories = backupData.Categories.Count,
+                Payees = backupData.Payees.Count
             }
         };
     }

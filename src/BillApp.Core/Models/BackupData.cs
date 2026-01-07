@@ -8,6 +8,7 @@ public class BackupData
     public List<BillBackupDto> Bills { get; set; } = new();
     public List<AccountBackupDto> Accounts { get; set; } = new();
     public List<CategoryBackupDto> Categories { get; set; } = new();
+    public List<PayeeBackupDto> Payees { get; set; } = new();
 }
 
 /// <summary>
@@ -18,7 +19,7 @@ public class BillBackupDto
     public Guid Id { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public string Payee { get; set; } = string.Empty;
+    public Guid PayeeId { get; set; }
     public decimal AmountDue { get; set; }
     public decimal AmountPaid { get; set; }
     public decimal Balance { get; set; }
@@ -26,11 +27,8 @@ public class BillBackupDto
     public int Status { get; set; }
     public DateTime? PaidDate { get; set; }
     public int Frequency { get; set; }
-    public Guid? CategoryId { get; set; }
     public Guid? AccountId { get; set; }
     public string? Notes { get; set; }
-    public string? PaymentUrl { get; set; }
-    public string? AccountNumber { get; set; }
     public Guid? PreviousBillId { get; set; }
     public string? Confirmation { get; set; }
     public Guid? PaymentAccountId { get; set; }
@@ -72,4 +70,19 @@ public class CategoryBackupDto
     public string? Description { get; set; }
     public string Color { get; set; } = "#607D8B";
     public bool IsDefault { get; set; }
+}
+
+/// <summary>
+/// Payee data for backup.
+/// </summary>
+public class PayeeBackupDto
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid? CategoryId { get; set; }
+    public string? PaymentUrl { get; set; }
+    public string? AccountNumber { get; set; }
+    public string? Notes { get; set; }
 }

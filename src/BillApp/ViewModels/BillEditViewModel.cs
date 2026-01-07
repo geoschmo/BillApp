@@ -24,6 +24,7 @@ public partial class BillEditViewModel : ViewModelBase
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IAccountRepository _accountRepository;
+    private readonly IPayeeRepository _payeeRepository;
     private readonly INavigationService _navigationService;
 
     private Guid? _editingBillId;
@@ -33,7 +34,13 @@ public partial class BillEditViewModel : ViewModelBase
     private string _title = "Add Bill";
 
     [ObservableProperty]
-    private string _payee = string.Empty;
+    private ObservableCollection<Payee> _payees = new();
+
+    [ObservableProperty]
+    private Payee? _selectedPayee;
+
+    [ObservableProperty]
+    private string _newPayeeName = string.Empty;
 
     [ObservableProperty]
     private decimal _amountDue;
@@ -57,16 +64,7 @@ public partial class BillEditViewModel : ViewModelBase
     private RecurrenceFrequency _frequency = RecurrenceFrequency.None;
 
     [ObservableProperty]
-    private Guid? _categoryId;
-
-    [ObservableProperty]
     private string? _notes;
-
-    [ObservableProperty]
-    private string? _paymentUrl;
-
-    [ObservableProperty]
-    private string? _accountNumber;
 
     [ObservableProperty]
     private Guid? _accountId;
@@ -86,15 +84,30 @@ public partial class BillEditViewModel : ViewModelBase
     [ObservableProperty]
     private string? _validationError;
 
+    // Payee-specific fields (editable when a payee is selected or being created)
+    [ObservableProperty]
+    private Guid? _payeeCategoryId;
+
+    [ObservableProperty]
+    private string? _payeePaymentUrl;
+
+    [ObservableProperty]
+    private string? _payeeAccountNumber;
+
+    [ObservableProperty]
+    private string? _payeeNotes;
+
     public BillEditViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
         IAccountRepository accountRepository,
+        IPayeeRepository payeeRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
         _accountRepository = accountRepository;
+        _payeeRepository = payeeRepository;
         _navigationService = navigationService;
     }
 
@@ -107,6 +120,10 @@ public partial class BillEditViewModel : ViewModelBase
             // Load categories
             var categories = await _categoryRepository.GetAllAsync();
             Categories = new ObservableCollection<Category>(categories);
+
+            // Load payees
+            var payees = await _payeeRepository.GetAllAsync();
+            Payees = new ObservableCollection<Payee>(payees);
 
             // Load payment methods (None, Cash, then active payment accounts)
             var accounts = await _accountRepository.GetActiveAsync();
@@ -133,7 +150,16 @@ public partial class BillEditViewModel : ViewModelBase
                 var bill = await _billRepository.GetByIdAsync(billId);
                 if (bill != null)
                 {
-                    Payee = bill.Payee;
+                    // Set payee
+                    SelectedPayee = Payees.FirstOrDefault(p => p.Id == bill.PayeeId);
+                    if (SelectedPayee != null)
+                    {
+                        PayeeCategoryId = SelectedPayee.CategoryId;
+                        PayeePaymentUrl = SelectedPayee.PaymentUrl;
+                        PayeeAccountNumber = SelectedPayee.AccountNumber;
+                        PayeeNotes = SelectedPayee.Notes;
+                    }
+
                     AmountDue = bill.AmountDue;
                     AmountPaid = bill.AmountPaid;
                     Balance = bill.Balance;
@@ -141,11 +167,8 @@ public partial class BillEditViewModel : ViewModelBase
                     Status = bill.Status;
                     PaidDate = bill.PaidDate;
                     Frequency = bill.Frequency;
-                    CategoryId = bill.CategoryId;
                     AccountId = bill.AccountId;
                     Notes = bill.Notes;
-                    PaymentUrl = bill.PaymentUrl;
-                    AccountNumber = bill.AccountNumber;
                     Confirmation = bill.Confirmation;
 
                     // Set selected payment method based on bill data
@@ -173,13 +196,25 @@ public partial class BillEditViewModel : ViewModelBase
         }
     }
 
+    partial void OnSelectedPayeeChanged(Payee? value)
+    {
+        if (value != null)
+        {
+            PayeeCategoryId = value.CategoryId;
+            PayeePaymentUrl = value.PaymentUrl;
+            PayeeAccountNumber = value.AccountNumber;
+            PayeeNotes = value.Notes;
+            NewPayeeName = string.Empty; // Clear new payee name when selecting existing
+        }
+    }
+
     [RelayCommand]
     private async Task SaveAsync()
     {
-        // Validate
-        if (string.IsNullOrWhiteSpace(Payee))
+        // Validate - must have either selected payee or new payee name
+        if (SelectedPayee == null && string.IsNullOrWhiteSpace(NewPayeeName))
         {
-            ValidationError = "Payee name is required";
+            ValidationError = "Please select a payee or enter a new payee name";
             return;
         }
 
@@ -193,6 +228,39 @@ public partial class BillEditViewModel : ViewModelBase
 
         try
         {
+            // Get or create payee
+            Payee payee;
+            if (SelectedPayee != null)
+            {
+                payee = SelectedPayee;
+                // Update payee fields if changed
+                bool payeeChanged = payee.CategoryId != PayeeCategoryId ||
+                                   payee.PaymentUrl != PayeePaymentUrl ||
+                                   payee.AccountNumber != PayeeAccountNumber ||
+                                   payee.Notes != PayeeNotes;
+                if (payeeChanged)
+                {
+                    payee.CategoryId = PayeeCategoryId;
+                    payee.PaymentUrl = PayeePaymentUrl;
+                    payee.AccountNumber = PayeeAccountNumber;
+                    payee.Notes = PayeeNotes;
+                    await _payeeRepository.UpdateAsync(payee);
+                }
+            }
+            else
+            {
+                // Create new payee
+                payee = new Payee
+                {
+                    Name = NewPayeeName.Trim(),
+                    CategoryId = PayeeCategoryId,
+                    PaymentUrl = PayeePaymentUrl,
+                    AccountNumber = PayeeAccountNumber,
+                    Notes = PayeeNotes
+                };
+                await _payeeRepository.InsertAsync(payee);
+            }
+
             // Check if status is being changed to Paid
             bool beingMarkedAsPaid = Status == PaymentStatus.Paid && _originalStatus != PaymentStatus.Paid;
 
@@ -209,7 +277,7 @@ public partial class BillEditViewModel : ViewModelBase
                 var bill = await _billRepository.GetByIdAsync(_editingBillId.Value);
                 if (bill != null)
                 {
-                    bill.Payee = Payee;
+                    bill.PayeeId = payee.Id;
                     bill.AmountDue = AmountDue;
                     bill.AmountPaid = AmountPaid;
                     bill.Balance = Balance;
@@ -217,11 +285,8 @@ public partial class BillEditViewModel : ViewModelBase
                     bill.Status = Status;
                     bill.PaidDate = PaidDate;
                     bill.Frequency = Frequency;
-                    bill.CategoryId = CategoryId;
                     bill.AccountId = accountIdToSave;
                     bill.Notes = Notes;
-                    bill.PaymentUrl = PaymentUrl;
-                    bill.AccountNumber = AccountNumber;
                     bill.Confirmation = Confirmation;
                     bill.IsCashPayment = isCashPayment;
                     bill.PaymentAccountId = paymentAccountId;
@@ -251,7 +316,7 @@ public partial class BillEditViewModel : ViewModelBase
                 // Create new bill
                 var bill = new Bill
                 {
-                    Payee = Payee,
+                    PayeeId = payee.Id,
                     AmountDue = AmountDue,
                     AmountPaid = AmountPaid,
                     Balance = Balance,
@@ -259,11 +324,8 @@ public partial class BillEditViewModel : ViewModelBase
                     Status = Status,
                     PaidDate = PaidDate,
                     Frequency = Frequency,
-                    CategoryId = CategoryId,
                     AccountId = accountIdToSave,
                     Notes = Notes,
-                    PaymentUrl = PaymentUrl,
-                    AccountNumber = AccountNumber,
                     Confirmation = Confirmation,
                     IsCashPayment = isCashPayment,
                     PaymentAccountId = paymentAccountId

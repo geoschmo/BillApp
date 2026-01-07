@@ -8,9 +8,9 @@ namespace BillApp.Core.Models;
 public class Bill : EntityBase
 {
     /// <summary>
-    /// Name of the payee (e.g., "Electric Company", "Netflix")
+    /// Reference to the payee for this bill
     /// </summary>
-    public string Payee { get; set; } = string.Empty;
+    public Guid PayeeId { get; set; }
 
     /// <summary>
     /// Amount due for this bill
@@ -43,24 +43,9 @@ public class Bill : EntityBase
     public RecurrenceFrequency Frequency { get; set; } = RecurrenceFrequency.None;
 
     /// <summary>
-    /// Category ID for organization
-    /// </summary>
-    public Guid? CategoryId { get; set; }
-
-    /// <summary>
-    /// Optional notes about this bill
+    /// Optional notes specific to this bill instance
     /// </summary>
     public string? Notes { get; set; }
-
-    /// <summary>
-    /// URL for online payment (optional)
-    /// </summary>
-    public string? PaymentUrl { get; set; }
-
-    /// <summary>
-    /// Account number or reference (optional, not encrypted in Phase 2)
-    /// </summary>
-    public string? AccountNumber { get; set; }
 
     /// <summary>
     /// If this is a recurring bill, the ID of the previous bill in the chain
@@ -93,7 +78,7 @@ public class Bill : EntityBase
     public Guid? AccountId { get; set; }
 
     // Navigation properties - not stored in DB, set by ViewModel
-    public Category? Category { get; set; }
+    public Payee? Payee { get; set; }
     public Account? Account { get; set; }
     public Account? PaymentAccount { get; set; }
 
@@ -120,18 +105,15 @@ public class Bill : EntityBase
     {
         return new Bill
         {
-            Payee = Payee,
+            PayeeId = PayeeId,
             AmountDue = 0, // Start fresh, user will set the new amount due
             AmountPaid = 0,
             Balance = Balance - AmountPaid, // Reduce balance by payment
             DueDate = CalculateNextDueDate(),
             Status = PaymentStatus.Pending,
             Frequency = Frequency,
-            CategoryId = CategoryId,
             AccountId = AccountId,
             Notes = Notes,
-            PaymentUrl = PaymentUrl,
-            AccountNumber = AccountNumber,
             PreviousBillId = Id
         };
     }

@@ -20,9 +20,9 @@ public class BillRepository : RepositoryBase<Bill>, IBillRepository
         return Task.FromResult(bills);
     }
 
-    public Task<IEnumerable<Bill>> GetByCategoryAsync(Guid categoryId)
+    public Task<IEnumerable<Bill>> GetByPayeeAsync(Guid payeeId)
     {
-        var bills = Collection.Find(b => b.CategoryId == categoryId);
+        var bills = Collection.Find(b => b.PayeeId == payeeId);
         return Task.FromResult(bills);
     }
 

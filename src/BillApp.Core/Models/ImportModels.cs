@@ -43,11 +43,22 @@ public class ImportAccount
 }
 
 /// <summary>
+/// Represents a payee to be imported.
+/// </summary>
+public class ImportPayee
+{
+    public string Name { get; set; } = string.Empty;
+    public string? AccountNumber { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string DedupeKey => Name.ToLowerInvariant();
+}
+
+/// <summary>
 /// Represents a bill to be imported.
 /// </summary>
 public class ImportBill
 {
-    public string Payee { get; set; } = string.Empty;
+    public string PayeeName { get; set; } = string.Empty;
     public string? AccountDedupeKey { get; set; }
     public RecurrenceFrequency Frequency { get; set; }
     public decimal AmountDue { get; set; }
@@ -95,6 +106,7 @@ public class ImportValidationResult
     public bool IsValid => !ValidationItems.Any(v => v.Severity == ImportValidationSeverity.Error);
     public int TotalRows { get; set; }
     public List<ImportAccount> Accounts { get; set; } = new();
+    public List<ImportPayee> Payees { get; set; } = new();
     public List<ImportBill> Bills { get; set; } = new();
     public List<string> PaymentAccountsToCreate { get; set; } = new();
     public List<ImportValidationItem> ValidationItems { get; set; } = new();
@@ -110,6 +122,7 @@ public class ImportExecutionResult
 {
     public bool Success { get; set; }
     public int AccountsCreated { get; set; }
+    public int PayeesCreated { get; set; }
     public int BillsCreated { get; set; }
     public int PaymentAccountsCreated { get; set; }
     public string? ErrorMessage { get; set; }

@@ -13,6 +13,7 @@ public class CsvImportService : IImportService
     private readonly IBillRepository _billRepository;
     private readonly IAccountRepository _accountRepository;
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IPayeeRepository _payeeRepository;
 
     // Valid frequency values (case-insensitive)
     private static readonly Dictionary<string, RecurrenceFrequency> FrequencyMap = new(StringComparer.OrdinalIgnoreCase)
@@ -46,11 +47,13 @@ public class CsvImportService : IImportService
     public CsvImportService(
         IBillRepository billRepository,
         IAccountRepository accountRepository,
-        ICategoryRepository categoryRepository)
+        ICategoryRepository categoryRepository,
+        IPayeeRepository payeeRepository)
     {
         _billRepository = billRepository;
         _accountRepository = accountRepository;
         _categoryRepository = categoryRepository;
+        _payeeRepository = payeeRepository;
     }
 
     public async Task<ImportValidationResult> ValidateFileAsync(string filePath, ImportMode mode)
@@ -85,7 +88,7 @@ public class CsvImportService : IImportService
             return result;
         }
 
-        // Get existing accounts and payment accounts for lookups
+        // Get existing accounts, payees, and payment accounts for lookups
         // In ReplaceAll mode, we ignore existing since they'll be deleted
         var existingAccounts = mode == ImportMode.ReplaceAll
             ? new List<Account>()
@@ -93,9 +96,13 @@ public class CsvImportService : IImportService
         var existingPaymentAccounts = existingAccounts
             .Where(a => a.IsPaymentAccount)
             .ToDictionary(a => a.Name.ToLowerInvariant(), a => a);
+        var existingPayees = mode == ImportMode.ReplaceAll
+            ? new List<Payee>()
+            : (await _payeeRepository.GetAllAsync()).ToList();
 
-        // Track accounts and payment methods we'll need to create
+        // Track accounts, payees, and payment methods we'll need to create
         var accountsToCreate = new Dictionary<string, ImportAccount>(StringComparer.OrdinalIgnoreCase);
+        var payeesToCreate = new Dictionary<string, ImportPayee>(StringComparer.OrdinalIgnoreCase);
         var paymentAccountsToCreate = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // Process each row
@@ -155,6 +162,34 @@ public class CsvImportService : IImportService
                 }
             }
 
+            // Parse and validate payee (using AccountName as payee name)
+            var payee = ParsePayee(row, result);
+            if (payee != null)
+            {
+                // Track unique payees
+                if (!payeesToCreate.ContainsKey(payee.DedupeKey))
+                {
+                    // Check if payee already exists in database
+                    var existingPayee = existingPayees.FirstOrDefault(p =>
+                        p.Name.Equals(payee.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (existingPayee != null)
+                    {
+                        result.ValidationItems.Add(new ImportValidationItem
+                        {
+                            RowNumber = row.RowNumber,
+                            Field = "Payee",
+                            Message = $"Payee '{payee.Name}' already exists in database. Bills will be linked to existing payee.",
+                            Severity = ImportValidationSeverity.Info
+                        });
+                    }
+                    else
+                    {
+                        payeesToCreate[payee.DedupeKey] = payee;
+                    }
+                }
+            }
+
             // Parse and validate bill
             var bill = ParseBill(row, account, result);
             if (bill != null)
@@ -186,9 +221,21 @@ public class CsvImportService : IImportService
         }
 
         result.Accounts = accountsToCreate.Values.ToList();
+        result.Payees = payeesToCreate.Values.ToList();
         result.PaymentAccountsToCreate = paymentAccountsToCreate.ToList();
 
         // Add summary info
+        if (result.Payees.Count > 0)
+        {
+            result.ValidationItems.Insert(0, new ImportValidationItem
+            {
+                RowNumber = 0,
+                Field = "Summary",
+                Message = $"{result.Payees.Count} new payee(s) will be created.",
+                Severity = ImportValidationSeverity.Info
+            });
+        }
+
         if (result.Accounts.Count > 0)
         {
             result.ValidationItems.Insert(0, new ImportValidationItem
@@ -227,6 +274,10 @@ public class CsvImportService : IImportService
                 foreach (var bill in existingBills)
                     await _billRepository.DeleteAsync(bill.Id);
 
+                var existingPayees = (await _payeeRepository.GetAllAsync()).ToList();
+                foreach (var payee in existingPayees)
+                    await _payeeRepository.DeleteAsync(payee.Id);
+
                 var existingAccounts = (await _accountRepository.GetAllAsync()).ToList();
                 foreach (var account in existingAccounts)
                     await _accountRepository.DeleteAsync(account.Id);
@@ -240,6 +291,15 @@ public class CsvImportService : IImportService
             {
                 var key = $"{existing.Name}|{existing.AccountNumber ?? ""}".ToLowerInvariant();
                 accountLookup[key] = existing;
+            }
+
+            // Get existing payees for lookups (after potential deletion)
+            var existingPayees2 = (await _payeeRepository.GetAllAsync()).ToList();
+            var payeeLookup = new Dictionary<string, Payee>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var existing in existingPayees2)
+            {
+                payeeLookup[existing.Name.ToLowerInvariant()] = existing;
             }
 
             // Create payment accounts first
@@ -277,6 +337,21 @@ public class CsvImportService : IImportService
                 accountLookup[importAccount.DedupeKey] = account;
             }
 
+            // Create payees
+            foreach (var importPayee in validationResult.Payees)
+            {
+                var payee = new Payee
+                {
+                    Name = importPayee.Name,
+                    AccountNumber = importPayee.AccountNumber,
+                    CategoryId = importPayee.CategoryId
+                };
+                await _payeeRepository.InsertAsync(payee);
+                result.PayeesCreated++;
+
+                payeeLookup[importPayee.DedupeKey] = payee;
+            }
+
             // Build payment account lookup by name
             var paymentAccountLookup = (await _accountRepository.GetAllAsync())
                 .Where(a => a.IsPaymentAccount)
@@ -291,6 +366,22 @@ public class CsvImportService : IImportService
                     accountLookup.TryGetValue(importBill.AccountDedupeKey, out var acct))
                 {
                     linkedAccount = acct;
+                }
+
+                // Find the payee for this bill
+                Payee? linkedPayee = null;
+                if (payeeLookup.TryGetValue(importBill.PayeeName.ToLowerInvariant(), out var payee))
+                {
+                    linkedPayee = payee;
+                }
+
+                if (linkedPayee == null)
+                {
+                    // This shouldn't happen if validation passed, but create one just in case
+                    linkedPayee = new Payee { Name = importBill.PayeeName };
+                    await _payeeRepository.InsertAsync(linkedPayee);
+                    payeeLookup[importBill.PayeeName.ToLowerInvariant()] = linkedPayee;
+                    result.PayeesCreated++;
                 }
 
                 // Determine payment method
@@ -311,7 +402,7 @@ public class CsvImportService : IImportService
 
                 var bill = new Bill
                 {
-                    Payee = importBill.Payee,
+                    PayeeId = linkedPayee.Id,
                     AccountId = linkedAccount?.Id,
                     Frequency = importBill.Frequency,
                     AmountDue = importBill.AmountDue,
@@ -499,11 +590,20 @@ public class CsvImportService : IImportService
         return account;
     }
 
+    private ImportPayee ParsePayee(ImportRow row, ImportValidationResult result)
+    {
+        return new ImportPayee
+        {
+            Name = row.AccountName!, // Use AccountName as payee name
+            AccountNumber = row.AccountNumber
+        };
+    }
+
     private ImportBill? ParseBill(ImportRow row, ImportAccount? account, ImportValidationResult result)
     {
         var bill = new ImportBill
         {
-            Payee = row.AccountName!,
+            PayeeName = row.AccountName!, // Use AccountName as payee name
             AccountDedupeKey = account?.DedupeKey,
             PaymentMethodName = row.PaymentMethod,
             Confirmation = row.Confirmation

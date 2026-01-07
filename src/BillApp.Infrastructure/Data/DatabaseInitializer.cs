@@ -23,8 +23,9 @@ public class DatabaseInitializer
         var categories = _context.GetCollection<Category>();
         var bills = _context.GetCollection<Bill>();
         var accounts = _context.GetCollection<Account>();
+        var payees = _context.GetCollection<Payee>();
 
-        return categories.Count() == 0 && bills.Count() == 0 && accounts.Count() == 0;
+        return categories.Count() == 0 && bills.Count() == 0 && accounts.Count() == 0 && payees.Count() == 0;
     }
 
     /// <summary>
@@ -49,6 +50,7 @@ public class DatabaseInitializer
     {
         var categories = _context.GetCollection<Category>();
         var accounts = _context.GetCollection<Account>();
+        var payees = _context.GetCollection<Payee>();
         var bills = _context.GetCollection<Bill>();
 
         // Seed categories first
@@ -113,6 +115,79 @@ public class DatabaseInitializer
         var creditCardsCategory = defaultCategories.First(c => c.Name == "Credit Cards");
         var insuranceCategory = defaultCategories.First(c => c.Name == "Insurance");
 
+        // Create sample payees
+        var oakwoodApartments = new Payee
+        {
+            Name = "Oakwood Apartments",
+            CategoryId = housingCategory.Id,
+            Notes = "Apartment rent - Unit 204"
+        };
+
+        var cityPower = new Payee
+        {
+            Name = "City Power & Light",
+            CategoryId = utilitiesCategory.Id,
+            PaymentUrl = "https://citypowerlight.com/pay"
+        };
+
+        var spectrumInternet = new Payee
+        {
+            Name = "Spectrum Internet",
+            CategoryId = phoneCategory.Id,
+            Notes = "200 Mbps plan"
+        };
+
+        var verizonWireless = new Payee
+        {
+            Name = "Verizon Wireless",
+            CategoryId = phoneCategory.Id
+        };
+
+        var netflix = new Payee
+        {
+            Name = "Netflix",
+            CategoryId = subscriptionsCategory.Id
+        };
+
+        var spotifyPremium = new Payee
+        {
+            Name = "Spotify Premium",
+            CategoryId = subscriptionsCategory.Id
+        };
+
+        var creditUnionAutoLoan = new Payee
+        {
+            Name = "Credit Union Auto Loan",
+            CategoryId = transportationCategory.Id,
+            Notes = "Payment 24 of 48"
+        };
+
+        var capitalOneVisa = new Payee
+        {
+            Name = "Capital One Visa",
+            CategoryId = creditCardsCategory.Id,
+            Notes = "Minimum payment due"
+        };
+
+        var geico = new Payee
+        {
+            Name = "GEICO",
+            CategoryId = insuranceCategory.Id
+        };
+
+        var cityWater = new Payee
+        {
+            Name = "City Water Department",
+            CategoryId = utilitiesCategory.Id
+        };
+
+        payees.InsertBulk(new[]
+        {
+            oakwoodApartments, cityPower, spectrumInternet, verizonWireless,
+            netflix, spotifyPremium, creditUnionAutoLoan, capitalOneVisa,
+            geico, cityWater
+        });
+
         var today = DateTime.Today;
         var thisMonth = new DateTime(today.Year, today.Month, 1);
 
@@ -122,142 +197,127 @@ public class DatabaseInitializer
             // Rent - paid this month
             new()
             {
-                Payee = "Oakwood Apartments",
+                PayeeId = oakwoodApartments.Id,
                 AmountDue = 1450.00m,
                 AmountPaid = 1450.00m,
                 Balance = 0,
                 DueDate = thisMonth.AddDays(1),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(1),
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = housingCategory.Id,
-                Notes = "Apartment rent - Unit 204"
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Electric - pending
             new()
             {
-                Payee = "City Power & Light",
+                PayeeId = cityPower.Id,
                 AmountDue = 125.50m,
                 AmountPaid = 0,
                 Balance = 125.50m,
                 DueDate = today.AddDays(10),
                 Status = PaymentStatus.Pending,
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = utilitiesCategory.Id,
-                PaymentUrl = "https://citypowerlight.com/pay"
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Internet - pending
             new()
             {
-                Payee = "Spectrum Internet",
+                PayeeId = spectrumInternet.Id,
                 AmountDue = 79.99m,
                 AmountPaid = 0,
                 Balance = 79.99m,
                 DueDate = today.AddDays(5),
                 Status = PaymentStatus.Pending,
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = phoneCategory.Id,
-                Notes = "200 Mbps plan"
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Phone - paid
             new()
             {
-                Payee = "Verizon Wireless",
+                PayeeId = verizonWireless.Id,
                 AmountDue = 85.00m,
                 AmountPaid = 85.00m,
                 Balance = 0,
                 DueDate = thisMonth.AddDays(14),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(12),
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = phoneCategory.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Netflix - pending
             new()
             {
-                Payee = "Netflix",
+                PayeeId = netflix.Id,
                 AmountDue = 15.99m,
                 AmountPaid = 0,
                 Balance = 15.99m,
                 DueDate = today.AddDays(3),
                 Status = PaymentStatus.Pending,
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = subscriptionsCategory.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Spotify - paid
             new()
             {
-                Payee = "Spotify Premium",
+                PayeeId = spotifyPremium.Id,
                 AmountDue = 10.99m,
                 AmountPaid = 10.99m,
                 Balance = 0,
                 DueDate = thisMonth.AddDays(7),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(7),
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = subscriptionsCategory.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Car payment - pending, linked to loan account
             new()
             {
-                Payee = "Credit Union Auto Loan",
+                PayeeId = creditUnionAutoLoan.Id,
                 AmountDue = 385.00m,
                 AmountPaid = 0,
                 Balance = 15420.00m,
                 DueDate = today.AddDays(8),
                 Status = PaymentStatus.Pending,
                 Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = transportationCategory.Id,
-                AccountId = carLoan.Id,
-                Notes = "Payment 24 of 48"
+                AccountId = carLoan.Id
             },
 
             // Credit card - pending, linked to credit card account
             new()
             {
-                Payee = "Capital One Visa",
+                PayeeId = capitalOneVisa.Id,
                 AmountDue = 150.00m,
                 AmountPaid = 0,
                 Balance = 1250.75m,
                 DueDate = today.AddDays(12),
                 Status = PaymentStatus.Pending,
                 Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = creditCardsCategory.Id,
-                AccountId = creditCard.Id,
-                Notes = "Minimum payment due"
+                AccountId = creditCard.Id
             },
 
             // Car insurance - paid
             new()
             {
-                Payee = "GEICO",
+                PayeeId = geico.Id,
                 AmountDue = 142.00m,
                 AmountPaid = 142.00m,
                 Balance = 0,
                 DueDate = thisMonth.AddDays(20),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(18),
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = insuranceCategory.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Water bill - overdue
             new()
             {
-                Payee = "City Water Department",
+                PayeeId = cityWater.Id,
                 AmountDue = 45.00m,
                 AmountPaid = 0,
                 Balance = 45.00m,
                 DueDate = today.AddDays(-3),
                 Status = PaymentStatus.Pending, // Will show as overdue due to date
-                Frequency = RecurrenceFrequency.Monthly,
-                CategoryId = utilitiesCategory.Id
+                Frequency = RecurrenceFrequency.Monthly
             }
         };
 

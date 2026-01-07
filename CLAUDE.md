@@ -51,16 +51,18 @@ BillApp/
 
 ## Current Features
 
-- **Bills**: CRUD, inline editing, recurring bills, status tracking, category/account linking, pay method tracking
+- **Bills**: CRUD, recurring bills, status tracking, linked payee/account, pay method tracking
+- **Payees**: Vendor/company management with category, payment URL, account number, notes
 - **Accounts**: Bank accounts, credit cards, loans with encrypted credentials, payment account designation
 - **Backup/Restore**: Password-protected encrypted backups, portable across machines
-- **Import**: CSV import with validation, add-to-existing or replace-all modes
+- **Import**: CSV import with validation, add-to-existing or replace-all modes, auto-creates payees
 - **Security**: Database encryption (AES), DPAPI key protection, field-level encryption
 - **Settings**: Window size/position, column widths, backup settings persisted
 
 ## Data Models
 
-- `Bill` - Payment tracking with status, due date, recurrence, linked category/account, payment method (PaymentAccountId, IsCashPayment), confirmation number
+- `Payee` - Vendor/company with Name, CategoryId, PaymentUrl, AccountNumber, Notes (e.g., "Electric Company", "Netflix")
+- `Bill` - Payment tracking with PayeeId, status, due date, recurrence, linked account, payment method (PaymentAccountId, IsCashPayment), confirmation number, bill-specific notes
 - `Account` - Financial accounts with encrypted credentials (AccountNumber, Username, Password), IsPaymentAccount flag
 - `Category` - Bill categorization (seeded with defaults)
 
@@ -74,6 +76,7 @@ AccountName,AccountNumber,InterestRate,AccountType,IsActive,IsPaymentAccount,Fre
 - **Frequency values**: None, Weekly, BiWeekly, Monthly, Quarterly, Annually
 - **AccountType values**: Checking, Savings, CreditCard, Loan, Other
 - **PaymentMethod**: "Cash" or account name (auto-creates if not found)
+- **Payee creation**: AccountName is used as the payee name; payees are auto-created if not found
 
 ## Security Guidelines
 

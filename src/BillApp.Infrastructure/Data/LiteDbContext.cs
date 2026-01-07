@@ -18,7 +18,7 @@ public class LiteDbContext : IDisposable
         // Configure LiteDB to ignore navigation/computed properties
         // These are loaded separately, not stored in the database
         BsonMapper.Global.Entity<Bill>()
-            .Ignore(x => x.Category)
+            .Ignore(x => x.Payee)
             .Ignore(x => x.Account)
             .Ignore(x => x.PaymentAccount)
             .Ignore(x => x.IsOverdue)
@@ -30,6 +30,9 @@ public class LiteDbContext : IDisposable
             .Ignore(x => x.AvailableCredit)
             .Ignore(x => x.IsAsset)
             .Ignore(x => x.IsLiability);
+
+        BsonMapper.Global.Entity<Payee>()
+            .Ignore(x => x.Category);
     }
 
     public LiteDbContext(string? databasePath = null, string? password = null)

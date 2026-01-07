@@ -10,16 +10,22 @@ A Windows desktop application for personal finance management, built with WPF an
 - Create, edit, and delete bills with two-column form layout
 - Track amount due, amount paid, and balance
 - Due date tracking with overdue highlighting
-- Categorize bills (Utilities, Housing, Insurance, etc.)
 - Payment status tracking (Pending, Paid, Overdue)
 - Recurring bills (Weekly, Bi-weekly, Monthly, Quarterly, Semi-annually, Annually)
 - Auto-create next occurrence when a recurring bill is marked as paid
 - New recurring bills carry forward reduced balance (previous balance minus payment)
 - Pay dialog with payment amount, date, pay method, and confirmation number
 - Track payment method (Cash or designated payment account)
-- Inline editing directly in the bill list
+- Sortable bill list (by due date, category, account)
 - Filter and search bills (defaults to showing Active bills only)
 - Link bills to accounts (balance syncs automatically)
+- Create new bill from existing paid bill
+
+**Payee Management**
+- Payees represent vendors/companies (e.g., "Electric Company", "Netflix")
+- Store payee details: name, category, payment URL, account number, notes
+- Bills reference payees, allowing shared payee info across multiple bills
+- Create new payees inline when adding bills
 
 **Account Management**
 - Track all financial account types (Checking, Savings, Credit Card, Investment, Loan, Other)
@@ -97,7 +103,7 @@ BillApp/
 │   │   ├── Settings/               # User preferences
 │   │   └── Converters/             # Value converters
 │   ├── BillApp.Core/               # Business Logic
-│   │   ├── Models/                 # Entity classes (Bill, Account, Category)
+│   │   ├── Models/                 # Entity classes (Bill, Payee, Account, Category)
 │   │   ├── Enums/                  # Status, frequency, account type enums
 │   │   └── Interfaces/             # Repository & service contracts
 │   └── BillApp.Infrastructure/     # Data Access

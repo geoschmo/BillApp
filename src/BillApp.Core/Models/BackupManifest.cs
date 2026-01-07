@@ -20,4 +20,5 @@ public class BackupEntityCounts
     public int Bills { get; set; }
     public int Accounts { get; set; }
     public int Categories { get; set; }
+    public int Payees { get; set; }
 }

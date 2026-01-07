@@ -217,6 +217,123 @@
                     </StackPanel>
                 </GroupBox>
 
+                <!-- Data Tools Section -->
+                <GroupBox Header="Data Tools">
+                    <StackPanel>
+                        <TextBlock Text="Bulk Payee Reassignment"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,0,0,15">
+                            Move all bills from one payee to another. Useful for merging duplicate payees or reorganizing.
+                        </TextBlock>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="From:"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding Payees}"
+                                      SelectedItem="{Binding SourcePayee}"
+                                      DisplayMemberPath="Name"
+                                      Padding="8,6"
+                                      Margin="0,0,15,0"/>
+
+                            <TextBlock Grid.Column="2" Text="To:"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Column="3"
+                                      ItemsSource="{Binding Payees}"
+                                      SelectedItem="{Binding TargetPayee}"
+                                      DisplayMemberPath="Name"
+                                      Padding="8,6"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Reassign Bills"
+                                    Command="{Binding ReassignPayeesCommand}"
+                                    Padding="15,8"
+                                    IsEnabled="{Binding IsReassigning, Converter={StaticResource InverseBoolConverter}}"/>
+                            <TextBlock Text="Reassigning..."
+                                       VerticalAlignment="Center"
+                                       Margin="15,0,0,0"
+                                       Foreground="Gray"
+                                       Visibility="{Binding IsReassigning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Result Message -->
+                        <TextBlock Text="{Binding ReassignmentResult}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,10,0,0"
+                                   Foreground="#1565C0"
+                                   Visibility="{Binding ReassignmentResult, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                        <!-- Separator -->
+                        <Separator Margin="0,20,0,20"/>
+
+                        <!-- Payment Account Reassignment -->
+                        <TextBlock Text="Bulk Payment Account Reassignment"
+                                   Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,0,0,15">
+                            Change the payment account used on bills. Only accounts marked as payment accounts are shown.
+                        </TextBlock>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="From:"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding PaymentAccounts}"
+                                      SelectedItem="{Binding SourcePaymentAccount}"
+                                      DisplayMemberPath="Name"
+                                      Padding="8,6"
+                                      Margin="0,0,15,0"/>
+
+                            <TextBlock Grid.Column="2" Text="To:"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Column="3"
+                                      ItemsSource="{Binding PaymentAccounts}"
+                                      SelectedItem="{Binding TargetPaymentAccount}"
+                                      DisplayMemberPath="Name"
+                                      Padding="8,6"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Reassign Payment Accounts"
+                                    Command="{Binding ReassignPaymentAccountsCommand}"
+                                    Padding="15,8"
+                                    IsEnabled="{Binding IsReassigningPaymentAccounts, Converter={StaticResource InverseBoolConverter}}"/>
+                            <TextBlock Text="Reassigning..."
+                                       VerticalAlignment="Center"
+                                       Margin="15,0,0,0"
+                                       Foreground="Gray"
+                                       Visibility="{Binding IsReassigningPaymentAccounts, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Payment Account Result Message -->
+                        <TextBlock Text="{Binding PaymentAccountReassignmentResult}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,10,0,0"
+                                   Foreground="#1565C0"
+                                   Visibility="{Binding PaymentAccountReassignmentResult, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    </StackPanel>
+                </GroupBox>
+
                 <!-- Database Section -->
                 <GroupBox Header="Database">
                     <StackPanel>
