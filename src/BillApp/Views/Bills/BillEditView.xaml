@@ -124,10 +124,12 @@
                                  Text="{Binding AmountPaid, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
                                  Padding="10"/>
 
-                        <TextBlock Grid.Column="4" Grid.Row="0" Text="Balance" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TextBlock Grid.Column="4" Grid.Row="0" Text="Balance" FontWeight="SemiBold" Margin="0,0,0,5"
+                                   Visibility="{Binding IsPayeeFinancialAccount, Converter={StaticResource BoolToVisibilityConverter}}"/>
                         <TextBox Grid.Column="4" Grid.Row="1"
                                  Text="{Binding Balance, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                                 Padding="10"/>
+                                 Padding="10"
+                                 Visibility="{Binding IsPayeeFinancialAccount, Converter={StaticResource BoolToVisibilityConverter}}"/>
                     </Grid>
 
                     <!-- Due Date and Paid Date -->

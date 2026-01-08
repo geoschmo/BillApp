@@ -190,9 +190,20 @@ public partial class BillListViewModel : ViewModelBase
             .Where(p => p.IsActive)
             .Select(p => new PaymentMethodItem { AccountId = p.Id, Name = p.Name }));
 
+        // Determine default payment method from bill's existing payment info
+        PaymentMethodItem? defaultPaymentMethod = null;
+        if (bill.IsCashPayment)
+        {
+            defaultPaymentMethod = new PaymentMethodItem { Name = "Cash", IsCash = true };
+        }
+        else if (bill.PaymentAccountId.HasValue)
+        {
+            defaultPaymentMethod = new PaymentMethodItem { AccountId = bill.PaymentAccountId.Value };
+        }
+
         // Show pay dialog with default values
         var payeeName = bill.Payee?.Name ?? "Unknown";
-        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.DueDate, paymentMethods);
+        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.DueDate, paymentMethods, defaultPaymentMethod);
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() != true)
@@ -217,7 +228,7 @@ public partial class BillListViewModel : ViewModelBase
         var payee = await _payeeRepository.GetByIdAsync(bill.PayeeId);
         if (payee?.IsAccount == true && payee.IsLiability)
         {
-            payee.Balance -= bill.AmountPaid; // Payment reduces debt
+            payee.Balance = Math.Max(0, payee.Balance - bill.AmountPaid); // Payment reduces debt, min 0
             await _payeeRepository.UpdateAsync(payee);
         }
 
@@ -228,7 +239,7 @@ public partial class BillListViewModel : ViewModelBase
             if (paymentAcct?.IsAccount == true)
             {
                 if (paymentAcct.IsAsset)
-                    paymentAcct.Balance -= bill.AmountPaid; // Checking decreases
+                    paymentAcct.Balance = Math.Max(0, paymentAcct.Balance - bill.AmountPaid); // Checking decreases, min 0
                 else if (paymentAcct.IsLiability)
                     paymentAcct.Balance += bill.AmountPaid; // Credit card increases
                 await _payeeRepository.UpdateAsync(paymentAcct);
@@ -238,7 +249,9 @@ public partial class BillListViewModel : ViewModelBase
         // If this is a recurring bill, create the next occurrence
         if (bill.IsRecurring)
         {
-            var nextBill = bill.CreateNextRecurrence();
+            // Only carry balance forward for financial accounts
+            var carryBalance = payee?.IsAccount == true;
+            var nextBill = bill.CreateNextRecurrence(carryBalance);
             await _billRepository.InsertAsync(nextBill);
         }
 
@@ -264,7 +277,9 @@ public partial class BillListViewModel : ViewModelBase
         };
 
         var suggestedAmountDue = bill.AmountDue;
-        var suggestedBalance = bill.Balance - bill.AmountPaid; // Carry forward reduced balance
+        // Only carry balance forward for financial accounts
+        var isFinancialAccount = bill.Payee?.IsAccount == true;
+        var suggestedBalance = isFinancialAccount ? Math.Max(0, bill.Balance - bill.AmountPaid) : 0;
 
         // Show the dialog
         var payeeName = bill.Payee?.Name ?? "Unknown";
@@ -340,7 +355,8 @@ public partial class BillListViewModel : ViewModelBase
             // Create next recurring bill if being marked as paid and is recurring
             if (beingMarkedAsPaid && bill.IsRecurring)
             {
-                var nextBill = bill.CreateNextRecurrence();
+                var carryBalance = bill.Payee?.IsAccount == true;
+                var nextBill = bill.CreateNextRecurrence(carryBalance);
                 await _billRepository.InsertAsync(nextBill);
                 await LoadBillsAsync(); // Refresh to show the new bill
             }

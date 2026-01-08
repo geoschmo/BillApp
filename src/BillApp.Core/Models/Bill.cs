@@ -93,21 +93,25 @@ public class Bill : EntityBase
 
     /// <summary>
     /// Creates a copy of this bill for the next recurring period.
-    /// New balance is reduced by the amount paid on this bill.
     /// </summary>
-    public Bill CreateNextRecurrence()
+    /// <param name="carryBalance">If true, reduces balance by amount paid (for financial accounts). If false, AmountDue is set to previous AmountPaid and payment method is copied.</param>
+    public Bill CreateNextRecurrence(bool carryBalance = false)
     {
         return new Bill
         {
             PayeeId = PayeeId,
-            AmountDue = 0, // Start fresh, user will set the new amount due
+            // For financial accounts, start fresh. For regular payees, assume same amount as last payment.
+            AmountDue = carryBalance ? 0 : AmountPaid,
             AmountPaid = 0,
-            Balance = Balance - AmountPaid, // Reduce balance by payment
+            Balance = carryBalance ? Math.Max(0, Balance - AmountPaid) : 0,
             DueDate = CalculateNextDueDate(),
             Status = PaymentStatus.Pending,
             Frequency = Frequency,
             Notes = Notes,
-            PreviousBillId = Id
+            PreviousBillId = Id,
+            // For regular payees, copy the payment method from the previous bill
+            IsCashPayment = carryBalance ? false : IsCashPayment,
+            PaymentAccountId = carryBalance ? null : PaymentAccountId
         };
     }
 

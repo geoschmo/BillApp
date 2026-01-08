@@ -26,6 +26,12 @@ public class BillRepository : RepositoryBase<Bill>, IBillRepository
         return Task.FromResult(bills);
     }
 
+    public Task<IEnumerable<Bill>> GetByPaymentAccountAsync(Guid paymentAccountId)
+    {
+        var bills = Collection.Find(b => b.PaymentAccountId == paymentAccountId);
+        return Task.FromResult(bills);
+    }
+
     public Task<IEnumerable<Bill>> GetUpcomingAsync(int days)
     {
         var endDate = DateTime.Today.AddDays(days);

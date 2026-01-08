@@ -22,9 +22,9 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Payees" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Text="Accounts" FontSize="24" FontWeight="Bold"/>
             <Button Grid.Column="1"
-                    Content="+ Add Payee"
+                    Content="+ Add Account"
                     Command="{Binding AddPayeeCommand}"
                     Padding="15,8"/>
         </Grid>

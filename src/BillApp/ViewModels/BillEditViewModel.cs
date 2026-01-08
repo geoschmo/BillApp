@@ -200,7 +200,14 @@ public partial class BillEditViewModel : ViewModelBase
             PayeeNotes = value.Notes;
             NewPayeeName = string.Empty; // Clear new payee name when selecting existing
         }
+        OnPropertyChanged(nameof(IsPayeeFinancialAccount));
     }
+
+    /// <summary>
+    /// Returns true if the selected payee is a financial account (has balance tracking).
+    /// Used to show/hide balance field in the UI.
+    /// </summary>
+    public bool IsPayeeFinancialAccount => SelectedPayee?.IsAccount == true;
 
     [RelayCommand]
     private async Task SaveAsync()
@@ -296,7 +303,8 @@ public partial class BillEditViewModel : ViewModelBase
                     // Create next recurring bill if being marked as paid and is recurring
                     if (beingMarkedAsPaid && bill.IsRecurring)
                     {
-                        var nextBill = bill.CreateNextRecurrence();
+                        var carryBalance = payee.IsAccount;
+                        var nextBill = bill.CreateNextRecurrence(carryBalance);
                         await _billRepository.InsertAsync(nextBill);
                     }
                 }
@@ -335,7 +343,8 @@ public partial class BillEditViewModel : ViewModelBase
                 // Create next recurring bill if created as paid and is recurring
                 if (Status == PaymentStatus.Paid && bill.IsRecurring)
                 {
-                    var nextBill = bill.CreateNextRecurrence();
+                    var carryBalance = payee.IsAccount;
+                    var nextBill = bill.CreateNextRecurrence(carryBalance);
                     await _billRepository.InsertAsync(nextBill);
                 }
             }

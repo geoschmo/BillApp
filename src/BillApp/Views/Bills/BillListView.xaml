@@ -122,21 +122,40 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <!-- Balance -->
-                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                            <Setter Property="Padding" Value="5,0"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <!-- Balance (only shown for financial accounts) -->
+                <DataGridTemplateColumn Header="Balance" Width="80" SortMemberPath="Balance">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock HorizontalAlignment="Right" Padding="5,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding Balance, StringFormat=C}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Payee.IsAccount}" Value="False">
+                                                <Setter Property="Text" Value=""/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Due Date -->
-                <DataGridTemplateColumn Header="Due Date" Width="120" SortMemberPath="DueDate">
+                <DataGridTemplateColumn Header="Due Date" Width="100" SortMemberPath="DueDate">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding DueDate, StringFormat=d}" Padding="5,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Paid Date -->
+                <DataGridTemplateColumn Header="Paid Date" Width="100" SortMemberPath="PaidDate">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding PaidDate, StringFormat=d}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -146,15 +165,6 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Payee.Category.Name}" Padding="5,0"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-
-                <!-- Account -->
-                <DataGridTemplateColumn Header="Account" Width="110" SortMemberPath="Account.Name">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Account.Name}" Padding="5,0"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using BillApp.Core.Enums;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
@@ -11,6 +12,7 @@ namespace BillApp.ViewModels;
 public partial class PayeeListViewModel : ViewModelBase
 {
     private readonly IPayeeRepository _payeeRepository;
+    private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly INavigationService _navigationService;
 
@@ -41,10 +43,12 @@ public partial class PayeeListViewModel : ViewModelBase
 
     public PayeeListViewModel(
         IPayeeRepository payeeRepository,
+        IBillRepository billRepository,
         ICategoryRepository categoryRepository,
         INavigationService navigationService)
     {
         _payeeRepository = payeeRepository;
+        _billRepository = billRepository;
         _categoryRepository = categoryRepository;
         _navigationService = navigationService;
     }
@@ -137,7 +141,43 @@ public partial class PayeeListViewModel : ViewModelBase
     {
         if (payee == null) return;
 
-        // TODO: Add confirmation and check for linked bills
+        // Check for linked bills (as payee)
+        var billsAsPayee = (await _billRepository.GetByPayeeAsync(payee.Id)).ToList();
+
+        // Check for linked bills (as payment account)
+        var billsAsPaymentAccount = payee.IsPaymentAccount
+            ? (await _billRepository.GetByPaymentAccountAsync(payee.Id)).ToList()
+            : new List<Bill>();
+
+        var totalLinkedBills = billsAsPayee.Count + billsAsPaymentAccount.Count;
+
+        if (totalLinkedBills > 0)
+        {
+            var message = $"Cannot delete '{payee.Name}' because it is linked to bills:\n\n";
+
+            if (billsAsPayee.Count > 0)
+                message += $"- {billsAsPayee.Count} bill(s) use this as the payee\n";
+
+            if (billsAsPaymentAccount.Count > 0)
+                message += $"- {billsAsPaymentAccount.Count} bill(s) use this as the payment account\n";
+
+            message += "\nPlease reassign or delete these bills first.";
+
+            MessageBox.Show(message, "Cannot Delete", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        // Confirm deletion
+        var entityType = payee.IsAccount ? "account" : "payee";
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete the {entityType} '{payee.Name}'?",
+            "Confirm Delete",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
         await _payeeRepository.DeleteAsync(payee.Id);
         Payees.Remove(payee);
 

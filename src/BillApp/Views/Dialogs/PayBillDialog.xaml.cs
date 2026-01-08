@@ -10,7 +10,7 @@ public partial class PayBillDialog : Window
     public PaymentMethodItem? SelectedPaymentMethod { get; private set; }
     public string? Confirmation { get; private set; }
 
-    public PayBillDialog(string payee, decimal amountDue, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods)
+    public PayBillDialog(string payee, decimal amountDue, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods, PaymentMethodItem? defaultPaymentMethod = null)
     {
         InitializeComponent();
 
@@ -19,8 +19,21 @@ public partial class PayBillDialog : Window
         PaidDatePicker.SelectedDate = DateTime.Today;
 
         // Set up payment methods dropdown
-        PayMethodCombo.ItemsSource = paymentMethods;
-        PayMethodCombo.SelectedIndex = 0; // Default to (None)
+        var methods = paymentMethods.ToList();
+        PayMethodCombo.ItemsSource = methods;
+
+        // Try to select the default payment method, otherwise default to (None)
+        if (defaultPaymentMethod != null)
+        {
+            var match = methods.FirstOrDefault(m =>
+                (m.IsCash && defaultPaymentMethod.IsCash) ||
+                (m.AccountId.HasValue && m.AccountId == defaultPaymentMethod.AccountId));
+            PayMethodCombo.SelectedItem = match ?? methods.FirstOrDefault();
+        }
+        else
+        {
+            PayMethodCombo.SelectedIndex = 0; // Default to (None)
+        }
 
         PaidAmountBox.Focus();
         PaidAmountBox.SelectAll();
