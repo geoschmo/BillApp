@@ -60,7 +60,13 @@
 
                 <Button Content="Clear"
                         Command="{Binding ClearFilterCommand}"
-                        Padding="12,6"/>
+                        Padding="12,6"
+                        Margin="0,0,15,0"/>
+
+                <CheckBox Content="Show Inactive"
+                          IsChecked="{Binding ShowInactive}"
+                          VerticalAlignment="Center"
+                          Command="{Binding ApplyFilterCommand}"/>
             </StackPanel>
 
             <!-- Account Summary -->

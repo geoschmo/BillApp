@@ -31,6 +31,9 @@ public partial class PayeeListViewModel : ViewModelBase
     [ObservableProperty]
     private string _filterType = "All";
 
+    [ObservableProperty]
+    private bool _showInactive;
+
     // Account summary values
     [ObservableProperty]
     private decimal _totalAssets;
@@ -85,6 +88,12 @@ public partial class PayeeListViewModel : ViewModelBase
 
             // Apply filter
             var filtered = payees.AsEnumerable();
+
+            // Filter inactive accounts unless ShowInactive is checked
+            if (!ShowInactive)
+            {
+                filtered = filtered.Where(p => p.IsActive);
+            }
 
             if (!string.IsNullOrWhiteSpace(FilterText))
             {
@@ -203,6 +212,7 @@ public partial class PayeeListViewModel : ViewModelBase
     {
         FilterText = string.Empty;
         FilterType = "All";
+        ShowInactive = false;
         await LoadDataAsync();
     }
 
