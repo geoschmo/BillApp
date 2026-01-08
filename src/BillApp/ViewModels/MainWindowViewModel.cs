@@ -61,9 +61,9 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task NavigateToAccounts()
+    private async Task NavigateToPayees()
     {
-        await _navigationService.NavigateToAsync<AccountListViewModel>();
+        await _navigationService.NavigateToAsync<PayeeListViewModel>();
     }
 
     [RelayCommand]

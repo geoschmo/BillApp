@@ -6,7 +6,6 @@ namespace BillApp.Core.Models;
 public class BackupData
 {
     public List<BillBackupDto> Bills { get; set; } = new();
-    public List<AccountBackupDto> Accounts { get; set; } = new();
     public List<CategoryBackupDto> Categories { get; set; } = new();
     public List<PayeeBackupDto> Payees { get; set; } = new();
 }
@@ -27,35 +26,11 @@ public class BillBackupDto
     public int Status { get; set; }
     public DateTime? PaidDate { get; set; }
     public int Frequency { get; set; }
-    public Guid? AccountId { get; set; }
     public string? Notes { get; set; }
     public Guid? PreviousBillId { get; set; }
     public string? Confirmation { get; set; }
     public Guid? PaymentAccountId { get; set; }
     public bool IsCashPayment { get; set; }
-}
-
-/// <summary>
-/// Account data for backup. Encrypted fields are re-encrypted with backup password.
-/// </summary>
-public class AccountBackupDto
-{
-    public Guid Id { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int AccountType { get; set; }
-    public string? AccountNumber { get; set; } // Re-encrypted with backup password
-    public string? Institution { get; set; }
-    public decimal Balance { get; set; }
-    public decimal? CreditLimit { get; set; }
-    public decimal? InterestRate { get; set; }
-    public string? LoginUrl { get; set; }
-    public string? Username { get; set; } // Re-encrypted with backup password
-    public string? Password { get; set; } // Re-encrypted with backup password
-    public string? Notes { get; set; }
-    public bool IsActive { get; set; }
-    public bool IsPaymentAccount { get; set; }
 }
 
 /// <summary>
@@ -73,16 +48,31 @@ public class CategoryBackupDto
 }
 
 /// <summary>
-/// Payee data for backup.
+/// Payee data for backup. Includes optional account fields.
+/// Encrypted fields are re-encrypted with backup password.
 /// </summary>
 public class PayeeBackupDto
 {
     public Guid Id { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    // Core payee fields
     public string Name { get; set; } = string.Empty;
     public Guid? CategoryId { get; set; }
     public string? PaymentUrl { get; set; }
-    public string? AccountNumber { get; set; }
+    public string? AccountNumber { get; set; } // Re-encrypted with backup password
     public string? Notes { get; set; }
+
+    // Account fields (optional)
+    public bool IsAccount { get; set; }
+    public int? AccountType { get; set; }
+    public decimal Balance { get; set; }
+    public decimal? CreditLimit { get; set; }
+    public decimal? InterestRate { get; set; }
+    public string? Institution { get; set; }
+    public string? Username { get; set; } // Re-encrypted with backup password
+    public string? Password { get; set; } // Re-encrypted with backup password
+    public bool IsActive { get; set; }
+    public bool IsPaymentAccount { get; set; }
 }

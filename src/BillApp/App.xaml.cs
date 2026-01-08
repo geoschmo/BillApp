@@ -49,11 +49,11 @@ public partial class App : Application
             return new LiteDbContext(password: password);
         });
         services.AddSingleton<DatabaseInitializer>();
+        services.AddSingleton<DatabaseMigration>();
 
         // Repositories (transient - new instance each time, shares DbContext)
         services.AddTransient<IBillRepository, BillRepository>();
         services.AddTransient<ICategoryRepository, CategoryRepository>();
-        services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IPayeeRepository, PayeeRepository>();
 
         // Services (singleton = same instance everywhere)
@@ -68,8 +68,8 @@ public partial class App : Application
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<BillListViewModel>();
         services.AddTransient<BillEditViewModel>();
-        services.AddTransient<AccountListViewModel>();
-        services.AddTransient<AccountEditViewModel>();
+        services.AddTransient<PayeeListViewModel>();
+        services.AddTransient<PayeeEditViewModel>();
         services.AddTransient<BudgetViewModel>();
         services.AddTransient<SecureNotesViewModel>();
         services.AddTransient<ReportsViewModel>();
@@ -90,6 +90,10 @@ public partial class App : Application
         // Migrate existing unencrypted database if needed
         var migrator = _serviceProvider.GetRequiredService<DatabaseMigrator>();
         migrator.MigrateIfNeeded();
+
+        // Run database schema migration (Account -> Payee)
+        var schemaMigration = _serviceProvider.GetRequiredService<DatabaseMigration>();
+        schemaMigration.MigrateIfNeeded();
 
         // Initialize database - check if this is first run
         var dbInitializer = _serviceProvider.GetRequiredService<DatabaseInitializer>();

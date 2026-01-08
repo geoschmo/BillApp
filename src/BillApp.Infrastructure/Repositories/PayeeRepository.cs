@@ -1,3 +1,4 @@
+using BillApp.Core.Enums;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
 using BillApp.Infrastructure.Data;
@@ -37,5 +38,29 @@ public class PayeeRepository : RepositoryBase<Payee>, IPayeeRepository
         }
 
         return payees;
+    }
+
+    public Task<IEnumerable<Payee>> GetAccountsAsync()
+    {
+        var accounts = Collection.Find(p => p.IsAccount);
+        return Task.FromResult(accounts);
+    }
+
+    public Task<IEnumerable<Payee>> GetPaymentAccountsAsync()
+    {
+        var paymentAccounts = Collection.Find(p => p.IsPaymentAccount);
+        return Task.FromResult(paymentAccounts);
+    }
+
+    public Task<IEnumerable<Payee>> GetAccountsByTypeAsync(AccountType type)
+    {
+        var accounts = Collection.Find(p => p.IsAccount && p.AccountType == type);
+        return Task.FromResult(accounts);
+    }
+
+    public Task<IEnumerable<Payee>> GetActiveAccountsAsync()
+    {
+        var accounts = Collection.Find(p => p.IsAccount && p.IsActive);
+        return Task.FromResult(accounts);
     }
 }

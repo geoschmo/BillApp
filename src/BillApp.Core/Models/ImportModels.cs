@@ -9,7 +9,7 @@ public class ImportRow
 {
     public int RowNumber { get; set; }
 
-    // Account fields
+    // Payee fields (AccountName is used as payee name)
     public string? AccountName { get; set; }
     public string? AccountNumber { get; set; }
     public string? InterestRate { get; set; }
@@ -29,27 +29,21 @@ public class ImportRow
 }
 
 /// <summary>
-/// Represents an account to be imported, with associated bills.
-/// </summary>
-public class ImportAccount
-{
-    public string Name { get; set; } = string.Empty;
-    public string? AccountNumber { get; set; }
-    public decimal? InterestRate { get; set; }
-    public AccountType AccountType { get; set; } = AccountType.Other;
-    public bool IsActive { get; set; } = true;
-    public bool IsPaymentAccount { get; set; }
-    public string DedupeKey => $"{Name}|{AccountNumber ?? ""}".ToLowerInvariant();
-}
-
-/// <summary>
-/// Represents a payee to be imported.
+/// Represents a payee to be imported. Can optionally be an account.
 /// </summary>
 public class ImportPayee
 {
     public string Name { get; set; } = string.Empty;
     public string? AccountNumber { get; set; }
     public Guid? CategoryId { get; set; }
+
+    // Account fields (optional)
+    public bool IsAccount { get; set; }
+    public AccountType? AccountType { get; set; }
+    public decimal? InterestRate { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsPaymentAccount { get; set; }
+
     public string DedupeKey => Name.ToLowerInvariant();
 }
 
@@ -59,7 +53,6 @@ public class ImportPayee
 public class ImportBill
 {
     public string PayeeName { get; set; } = string.Empty;
-    public string? AccountDedupeKey { get; set; }
     public RecurrenceFrequency Frequency { get; set; }
     public decimal AmountDue { get; set; }
     public decimal AmountPaid { get; set; }
@@ -105,7 +98,6 @@ public class ImportValidationResult
 {
     public bool IsValid => !ValidationItems.Any(v => v.Severity == ImportValidationSeverity.Error);
     public int TotalRows { get; set; }
-    public List<ImportAccount> Accounts { get; set; } = new();
     public List<ImportPayee> Payees { get; set; } = new();
     public List<ImportBill> Bills { get; set; } = new();
     public List<string> PaymentAccountsToCreate { get; set; } = new();
@@ -121,7 +113,6 @@ public class ImportValidationResult
 public class ImportExecutionResult
 {
     public bool Success { get; set; }
-    public int AccountsCreated { get; set; }
     public int PayeesCreated { get; set; }
     public int BillsCreated { get; set; }
     public int PaymentAccountsCreated { get; set; }

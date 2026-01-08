@@ -5,7 +5,7 @@
              xmlns:vm="clr-namespace:BillApp.ViewModels"
              xmlns:views="clr-namespace:BillApp.Views"
              xmlns:billViews="clr-namespace:BillApp.Views.Bills"
-             xmlns:accountViews="clr-namespace:BillApp.Views.Accounts"
+             xmlns:payeeViews="clr-namespace:BillApp.Views.Payees"
              xmlns:budgetViews="clr-namespace:BillApp.Views.Budgets"
              xmlns:secureViews="clr-namespace:BillApp.Views.SecureNotes"
              xmlns:reportViews="clr-namespace:BillApp.Views.Reports"
@@ -45,12 +45,12 @@
                 <billViews:BillEditView/>
             </DataTemplate>
 
-            <DataTemplate DataType="{x:Type vm:AccountListViewModel}">
-                <accountViews:AccountListView/>
+            <DataTemplate DataType="{x:Type vm:PayeeListViewModel}">
+                <payeeViews:PayeeListView/>
             </DataTemplate>
 
-            <DataTemplate DataType="{x:Type vm:AccountEditViewModel}">
-                <accountViews:AccountEditView/>
+            <DataTemplate DataType="{x:Type vm:PayeeEditViewModel}">
+                <payeeViews:PayeeEditView/>
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type vm:BudgetViewModel}">

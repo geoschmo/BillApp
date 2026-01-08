@@ -63,7 +63,7 @@ public class Bill : EntityBase
     public string? Confirmation { get; set; }
 
     /// <summary>
-    /// Account used to pay this bill (different from AccountId which links the bill to an account)
+    /// Payee used to pay this bill (must have IsPaymentAccount=true)
     /// </summary>
     public Guid? PaymentAccountId { get; set; }
 
@@ -72,15 +72,9 @@ public class Bill : EntityBase
     /// </summary>
     public bool IsCashPayment { get; set; }
 
-    /// <summary>
-    /// Account ID for the linked account (optional) - the account this bill is associated with
-    /// </summary>
-    public Guid? AccountId { get; set; }
-
     // Navigation properties - not stored in DB, set by ViewModel
     public Payee? Payee { get; set; }
-    public Account? Account { get; set; }
-    public Account? PaymentAccount { get; set; }
+    public Payee? PaymentAccount { get; set; }
 
     /// <summary>
     /// Whether this bill is overdue (computed, not stored)
@@ -112,7 +106,6 @@ public class Bill : EntityBase
             DueDate = CalculateNextDueDate(),
             Status = PaymentStatus.Pending,
             Frequency = Frequency,
-            AccountId = AccountId,
             Notes = Notes,
             PreviousBillId = Id
         };

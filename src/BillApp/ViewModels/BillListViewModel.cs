@@ -14,7 +14,6 @@ public partial class BillListViewModel : ViewModelBase
 {
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly IPayeeRepository _payeeRepository;
     private readonly INavigationService _navigationService;
 
@@ -26,9 +25,6 @@ public partial class BillListViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<Category> _categories = new();
-
-    [ObservableProperty]
-    private ObservableCollection<Account> _accounts = new();
 
     [ObservableProperty]
     private ObservableCollection<Payee> _payees = new();
@@ -48,13 +44,11 @@ public partial class BillListViewModel : ViewModelBase
     public BillListViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
-        IAccountRepository accountRepository,
         IPayeeRepository payeeRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
-        _accountRepository = accountRepository;
         _payeeRepository = payeeRepository;
         _navigationService = navigationService;
     }
@@ -75,15 +69,6 @@ public partial class BillListViewModel : ViewModelBase
             // Load categories for the filter dropdown
             var categories = await _categoryRepository.GetAllAsync();
             Categories = new ObservableCollection<Category>(categories);
-
-            // Load accounts for display with a "None" option for inline editing
-            var accounts = await _accountRepository.GetAllAsync();
-            var accountList = new List<Account>
-            {
-                new Account { Id = Guid.Empty, Name = "(None)" }
-            };
-            accountList.AddRange(accounts);
-            Accounts = new ObservableCollection<Account>(accountList);
 
             // Load payees
             var payees = await _payeeRepository.GetAllAsync();
@@ -110,9 +95,8 @@ public partial class BillListViewModel : ViewModelBase
         // Build lookup dictionaries
         var payeeLookup = Payees.ToDictionary(p => p.Id);
         var categoryLookup = Categories.ToDictionary(c => c.Id);
-        var accountLookup = Accounts.Where(a => a.Id != Guid.Empty).ToDictionary(a => a.Id);
 
-        // Load payee, category, and account for each bill and track original statuses
+        // Load payee and category for each bill and track original statuses
         _originalStatuses.Clear();
         foreach (var bill in bills)
         {
@@ -127,13 +111,10 @@ public partial class BillListViewModel : ViewModelBase
                 }
             }
 
-            // Load account
-            if (bill.AccountId.HasValue && bill.AccountId.Value != Guid.Empty)
+            // Load payment account (now a Payee)
+            if (bill.PaymentAccountId.HasValue && payeeLookup.TryGetValue(bill.PaymentAccountId.Value, out var paymentAccount))
             {
-                if (accountLookup.TryGetValue(bill.AccountId.Value, out var account))
-                {
-                    bill.Account = account;
-                }
+                bill.PaymentAccount = paymentAccount;
             }
 
             _originalStatuses[bill.Id] = bill.Status;
@@ -199,15 +180,15 @@ public partial class BillListViewModel : ViewModelBase
         if (bill == null) return;
 
         // Build payment methods list (None, Cash, then payment accounts)
-        var accounts = await _accountRepository.GetActiveAsync();
+        var paymentAccounts = await _payeeRepository.GetPaymentAccountsAsync();
         var paymentMethods = new List<PaymentMethodItem>
         {
             new PaymentMethodItem { Name = "(None)" },
             new PaymentMethodItem { Name = "Cash", IsCash = true }
         };
-        paymentMethods.AddRange(accounts
-            .Where(a => a.IsPaymentAccount)
-            .Select(a => new PaymentMethodItem { AccountId = a.Id, Name = a.Name }));
+        paymentMethods.AddRange(paymentAccounts
+            .Where(p => p.IsActive)
+            .Select(p => new PaymentMethodItem { AccountId = p.Id, Name = p.Name }));
 
         // Show pay dialog with default values
         var payeeName = bill.Payee?.Name ?? "Unknown";
@@ -232,22 +213,33 @@ public partial class BillListViewModel : ViewModelBase
 
         await _billRepository.UpdateAsync(bill);
 
+        // Update payee balance if it's an account (liability)
+        var payee = await _payeeRepository.GetByIdAsync(bill.PayeeId);
+        if (payee?.IsAccount == true && payee.IsLiability)
+        {
+            payee.Balance -= bill.AmountPaid; // Payment reduces debt
+            await _payeeRepository.UpdateAsync(payee);
+        }
+
+        // Update payment account balance
+        if (!bill.IsCashPayment && bill.PaymentAccountId.HasValue)
+        {
+            var paymentAcct = await _payeeRepository.GetByIdAsync(bill.PaymentAccountId.Value);
+            if (paymentAcct?.IsAccount == true)
+            {
+                if (paymentAcct.IsAsset)
+                    paymentAcct.Balance -= bill.AmountPaid; // Checking decreases
+                else if (paymentAcct.IsLiability)
+                    paymentAcct.Balance += bill.AmountPaid; // Credit card increases
+                await _payeeRepository.UpdateAsync(paymentAcct);
+            }
+        }
+
         // If this is a recurring bill, create the next occurrence
         if (bill.IsRecurring)
         {
             var nextBill = bill.CreateNextRecurrence();
             await _billRepository.InsertAsync(nextBill);
-
-            // Update linked account balance to match new bill balance
-            if (nextBill.AccountId.HasValue && nextBill.AccountId.Value != Guid.Empty)
-            {
-                var account = await _accountRepository.GetByIdAsync(nextBill.AccountId.Value);
-                if (account != null)
-                {
-                    account.Balance = nextBill.Balance;
-                    await _accountRepository.UpdateAsync(account);
-                }
-            }
         }
 
         // Refresh the list to update UI
@@ -296,23 +288,11 @@ public partial class BillListViewModel : ViewModelBase
             DueDate = dialog.DueDate,
             Status = PaymentStatus.Pending,
             Frequency = bill.Frequency,
-            AccountId = bill.AccountId,
             Notes = bill.Notes,
             PreviousBillId = bill.Id
         };
 
         await _billRepository.InsertAsync(newBill);
-
-        // Update linked account balance if applicable
-        if (newBill.AccountId.HasValue && newBill.AccountId.Value != Guid.Empty)
-        {
-            var account = await _accountRepository.GetByIdAsync(newBill.AccountId.Value);
-            if (account != null)
-            {
-                account.Balance = newBill.Balance;
-                await _accountRepository.UpdateAsync(account);
-            }
-        }
 
         // Refresh the list to show the new bill
         await LoadBillsAsync();
@@ -355,21 +335,6 @@ public partial class BillListViewModel : ViewModelBase
                 }
             }
 
-            // Update the account reference - convert Guid.Empty to null (the "None" option)
-            if (bill.AccountId == Guid.Empty)
-            {
-                bill.AccountId = null;
-                bill.Account = null;
-            }
-            else if (bill.AccountId.HasValue)
-            {
-                bill.Account = Accounts.FirstOrDefault(a => a.Id == bill.AccountId.Value);
-            }
-            else
-            {
-                bill.Account = null;
-            }
-
             await _billRepository.UpdateAsync(bill);
 
             // Create next recurring bill if being marked as paid and is recurring
@@ -377,34 +342,10 @@ public partial class BillListViewModel : ViewModelBase
             {
                 var nextBill = bill.CreateNextRecurrence();
                 await _billRepository.InsertAsync(nextBill);
-
-                // Update linked account balance to match new bill balance
-                if (nextBill.AccountId.HasValue && nextBill.AccountId.Value != Guid.Empty)
-                {
-                    var account = await _accountRepository.GetByIdAsync(nextBill.AccountId.Value);
-                    if (account != null)
-                    {
-                        account.Balance = nextBill.Balance;
-                        await _accountRepository.UpdateAsync(account);
-                    }
-                }
-
                 await LoadBillsAsync(); // Refresh to show the new bill
             }
             else
             {
-                // Sync pending bill balance to linked account
-                if (bill.Status == PaymentStatus.Pending &&
-                    bill.AccountId.HasValue && bill.AccountId.Value != Guid.Empty)
-                {
-                    var account = await _accountRepository.GetByIdAsync(bill.AccountId.Value);
-                    if (account != null)
-                    {
-                        account.Balance = bill.Balance;
-                        await _accountRepository.UpdateAsync(account);
-                    }
-                }
-
                 // Update the tracked original status
                 _originalStatuses[bill.Id] = bill.Status;
 

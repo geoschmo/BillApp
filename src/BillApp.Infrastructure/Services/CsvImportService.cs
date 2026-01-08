@@ -11,7 +11,6 @@ namespace BillApp.Infrastructure.Services;
 public class CsvImportService : IImportService
 {
     private readonly IBillRepository _billRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IPayeeRepository _payeeRepository;
 
@@ -46,12 +45,10 @@ public class CsvImportService : IImportService
 
     public CsvImportService(
         IBillRepository billRepository,
-        IAccountRepository accountRepository,
         ICategoryRepository categoryRepository,
         IPayeeRepository payeeRepository)
     {
         _billRepository = billRepository;
-        _accountRepository = accountRepository;
         _categoryRepository = categoryRepository;
         _payeeRepository = payeeRepository;
     }
@@ -88,20 +85,16 @@ public class CsvImportService : IImportService
             return result;
         }
 
-        // Get existing accounts, payees, and payment accounts for lookups
+        // Get existing payees for lookups
         // In ReplaceAll mode, we ignore existing since they'll be deleted
-        var existingAccounts = mode == ImportMode.ReplaceAll
-            ? new List<Account>()
-            : (await _accountRepository.GetAllAsync()).ToList();
-        var existingPaymentAccounts = existingAccounts
-            .Where(a => a.IsPaymentAccount)
-            .ToDictionary(a => a.Name.ToLowerInvariant(), a => a);
         var existingPayees = mode == ImportMode.ReplaceAll
             ? new List<Payee>()
             : (await _payeeRepository.GetAllAsync()).ToList();
+        var existingPaymentAccounts = existingPayees
+            .Where(p => p.IsPaymentAccount)
+            .ToDictionary(p => p.Name.ToLowerInvariant(), p => p);
 
-        // Track accounts, payees, and payment methods we'll need to create
-        var accountsToCreate = new Dictionary<string, ImportAccount>(StringComparer.OrdinalIgnoreCase);
+        // Track payees and payment methods we'll need to create
         var payeesToCreate = new Dictionary<string, ImportPayee>(StringComparer.OrdinalIgnoreCase);
         var paymentAccountsToCreate = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -133,36 +126,7 @@ public class CsvImportService : IImportService
                 continue;
             }
 
-            // Parse and validate account
-            var account = ParseAccount(row, result);
-            if (account != null)
-            {
-                // Track unique accounts
-                if (!accountsToCreate.ContainsKey(account.DedupeKey))
-                {
-                    // Check if account already exists in database (only matters in AddToExisting mode)
-                    var existingAccount = existingAccounts.FirstOrDefault(a =>
-                        a.Name.Equals(account.Name, StringComparison.OrdinalIgnoreCase) &&
-                        (a.AccountNumber ?? "").Equals(account.AccountNumber ?? "", StringComparison.OrdinalIgnoreCase));
-
-                    if (existingAccount != null)
-                    {
-                        result.ValidationItems.Add(new ImportValidationItem
-                        {
-                            RowNumber = row.RowNumber,
-                            Field = "Account",
-                            Message = $"Account '{account.Name}' already exists in database. Bills will be linked to existing account.",
-                            Severity = ImportValidationSeverity.Info
-                        });
-                    }
-                    else
-                    {
-                        accountsToCreate[account.DedupeKey] = account;
-                    }
-                }
-            }
-
-            // Parse and validate payee (using AccountName as payee name)
+            // Parse and validate payee (with optional account fields)
             var payee = ParsePayee(row, result);
             if (payee != null)
             {
@@ -191,7 +155,7 @@ public class CsvImportService : IImportService
             }
 
             // Parse and validate bill
-            var bill = ParseBill(row, account, result);
+            var bill = ParseBill(row, result);
             if (bill != null)
             {
                 result.Bills.Add(bill);
@@ -204,7 +168,7 @@ public class CsvImportService : IImportService
 
                     // Check if it exists or will be created
                     if (!existingPaymentAccounts.ContainsKey(paymentMethodLower) &&
-                        !accountsToCreate.Values.Any(a => a.Name.Equals(bill.PaymentMethodName, StringComparison.OrdinalIgnoreCase) && a.IsPaymentAccount) &&
+                        !payeesToCreate.Values.Any(p => p.Name.Equals(bill.PaymentMethodName, StringComparison.OrdinalIgnoreCase) && p.IsPaymentAccount) &&
                         !paymentAccountsToCreate.Contains(bill.PaymentMethodName))
                     {
                         paymentAccountsToCreate.Add(bill.PaymentMethodName);
@@ -220,7 +184,6 @@ public class CsvImportService : IImportService
             }
         }
 
-        result.Accounts = accountsToCreate.Values.ToList();
         result.Payees = payeesToCreate.Values.ToList();
         result.PaymentAccountsToCreate = paymentAccountsToCreate.ToList();
 
@@ -232,17 +195,6 @@ public class CsvImportService : IImportService
                 RowNumber = 0,
                 Field = "Summary",
                 Message = $"{result.Payees.Count} new payee(s) will be created.",
-                Severity = ImportValidationSeverity.Info
-            });
-        }
-
-        if (result.Accounts.Count > 0)
-        {
-            result.ValidationItems.Insert(0, new ImportValidationItem
-            {
-                RowNumber = 0,
-                Field = "Summary",
-                Message = $"{result.Accounts.Count} new account(s) will be created.",
                 Severity = ImportValidationSeverity.Info
             });
         }
@@ -277,20 +229,6 @@ public class CsvImportService : IImportService
                 var existingPayees = (await _payeeRepository.GetAllAsync()).ToList();
                 foreach (var payee in existingPayees)
                     await _payeeRepository.DeleteAsync(payee.Id);
-
-                var existingAccounts = (await _accountRepository.GetAllAsync()).ToList();
-                foreach (var account in existingAccounts)
-                    await _accountRepository.DeleteAsync(account.Id);
-            }
-
-            // Get existing accounts for lookups (after potential deletion)
-            var existingAccounts2 = (await _accountRepository.GetAllAsync()).ToList();
-            var accountLookup = new Dictionary<string, Account>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var existing in existingAccounts2)
-            {
-                var key = $"{existing.Name}|{existing.AccountNumber ?? ""}".ToLowerInvariant();
-                accountLookup[key] = existing;
             }
 
             // Get existing payees for lookups (after potential deletion)
@@ -302,72 +240,48 @@ public class CsvImportService : IImportService
                 payeeLookup[existing.Name.ToLowerInvariant()] = existing;
             }
 
-            // Create payment accounts first
+            // Create payment accounts first (as Payees with IsPaymentAccount=true)
             foreach (var paymentAccountName in validationResult.PaymentAccountsToCreate)
             {
-                var paymentAccount = new Account
+                var paymentAccount = new Payee
                 {
                     Name = paymentAccountName,
+                    IsAccount = true,
                     AccountType = AccountType.Other,
                     IsActive = true,
                     IsPaymentAccount = true
                 };
-                await _accountRepository.InsertAsync(paymentAccount);
+                await _payeeRepository.InsertAsync(paymentAccount);
                 result.PaymentAccountsCreated++;
-
-                var key = $"{paymentAccount.Name}|".ToLowerInvariant();
-                accountLookup[key] = paymentAccount;
+                payeeLookup[paymentAccountName.ToLowerInvariant()] = paymentAccount;
             }
 
-            // Create accounts
-            foreach (var importAccount in validationResult.Accounts)
-            {
-                var account = new Account
-                {
-                    Name = importAccount.Name,
-                    AccountNumber = importAccount.AccountNumber,
-                    InterestRate = importAccount.InterestRate,
-                    AccountType = importAccount.AccountType,
-                    IsActive = importAccount.IsActive,
-                    IsPaymentAccount = importAccount.IsPaymentAccount
-                };
-                await _accountRepository.InsertAsync(account);
-                result.AccountsCreated++;
-
-                accountLookup[importAccount.DedupeKey] = account;
-            }
-
-            // Create payees
+            // Create payees (which may also be accounts)
             foreach (var importPayee in validationResult.Payees)
             {
                 var payee = new Payee
                 {
                     Name = importPayee.Name,
                     AccountNumber = importPayee.AccountNumber,
-                    CategoryId = importPayee.CategoryId
+                    CategoryId = importPayee.CategoryId,
+                    IsAccount = importPayee.IsAccount,
+                    AccountType = importPayee.AccountType,
+                    InterestRate = importPayee.InterestRate,
+                    IsActive = importPayee.IsActive,
+                    IsPaymentAccount = importPayee.IsPaymentAccount
                 };
                 await _payeeRepository.InsertAsync(payee);
                 result.PayeesCreated++;
-
                 payeeLookup[importPayee.DedupeKey] = payee;
             }
 
             // Build payment account lookup by name
-            var paymentAccountLookup = (await _accountRepository.GetAllAsync())
-                .Where(a => a.IsPaymentAccount)
-                .ToDictionary(a => a.Name.ToLowerInvariant(), a => a);
+            var paymentAccountLookup = (await _payeeRepository.GetPaymentAccountsAsync())
+                .ToDictionary(p => p.Name.ToLowerInvariant(), p => p);
 
             // Create bills
             foreach (var importBill in validationResult.Bills)
             {
-                // Find the account for this bill
-                Account? linkedAccount = null;
-                if (!string.IsNullOrEmpty(importBill.AccountDedupeKey) &&
-                    accountLookup.TryGetValue(importBill.AccountDedupeKey, out var acct))
-                {
-                    linkedAccount = acct;
-                }
-
                 // Find the payee for this bill
                 Payee? linkedPayee = null;
                 if (payeeLookup.TryGetValue(importBill.PayeeName.ToLowerInvariant(), out var payee))
@@ -403,7 +317,6 @@ public class CsvImportService : IImportService
                 var bill = new Bill
                 {
                     PayeeId = linkedPayee.Id,
-                    AccountId = linkedAccount?.Id,
                     Frequency = importBill.Frequency,
                     AmountDue = importBill.AmountDue,
                     AmountPaid = importBill.AmountPaid,
@@ -528,83 +441,83 @@ public class CsvImportService : IImportService
         return null;
     }
 
-    private ImportAccount? ParseAccount(ImportRow row, ImportValidationResult result)
+    private ImportPayee ParsePayee(ImportRow row, ImportValidationResult result)
     {
-        var account = new ImportAccount
+        var payee = new ImportPayee
         {
             Name = row.AccountName!,
             AccountNumber = row.AccountNumber
         };
 
-        // Parse interest rate
-        if (!string.IsNullOrWhiteSpace(row.InterestRate))
+        // Check if this row has account-specific fields
+        bool hasAccountFields = !string.IsNullOrWhiteSpace(row.AccountType) ||
+                                !string.IsNullOrWhiteSpace(row.InterestRate) ||
+                                !string.IsNullOrWhiteSpace(row.IsPaymentAccount);
+
+        if (hasAccountFields)
         {
-            if (decimal.TryParse(row.InterestRate.TrimEnd('%'), out var rate))
+            payee.IsAccount = true;
+
+            // Parse account type
+            if (!string.IsNullOrWhiteSpace(row.AccountType))
             {
-                account.InterestRate = rate;
-            }
-            else
-            {
-                result.ValidationItems.Add(new ImportValidationItem
+                if (AccountTypeMap.TryGetValue(row.AccountType, out var accountType))
                 {
-                    RowNumber = row.RowNumber,
-                    Field = "InterestRate",
-                    Message = $"Invalid interest rate '{row.InterestRate}'. Using null.",
-                    Severity = ImportValidationSeverity.Warning
-                });
-            }
-        }
-
-        // Parse account type
-        if (!string.IsNullOrWhiteSpace(row.AccountType))
-        {
-            if (AccountTypeMap.TryGetValue(row.AccountType, out var accountType))
-            {
-                account.AccountType = accountType;
-            }
-            else
-            {
-                result.ValidationItems.Add(new ImportValidationItem
+                    payee.AccountType = accountType;
+                }
+                else
                 {
-                    RowNumber = row.RowNumber,
-                    Field = "AccountType",
-                    Message = $"Invalid account type '{row.AccountType}'. Using 'Other'.",
-                    Severity = ImportValidationSeverity.Warning
-                });
-                account.AccountType = AccountType.Other;
+                    result.ValidationItems.Add(new ImportValidationItem
+                    {
+                        RowNumber = row.RowNumber,
+                        Field = "AccountType",
+                        Message = $"Invalid account type '{row.AccountType}'. Using 'Other'.",
+                        Severity = ImportValidationSeverity.Warning
+                    });
+                    payee.AccountType = AccountType.Other;
+                }
+            }
+
+            // Parse interest rate
+            if (!string.IsNullOrWhiteSpace(row.InterestRate))
+            {
+                if (decimal.TryParse(row.InterestRate.TrimEnd('%'), out var rate))
+                {
+                    payee.InterestRate = rate;
+                }
+                else
+                {
+                    result.ValidationItems.Add(new ImportValidationItem
+                    {
+                        RowNumber = row.RowNumber,
+                        Field = "InterestRate",
+                        Message = $"Invalid interest rate '{row.InterestRate}'. Using null.",
+                        Severity = ImportValidationSeverity.Warning
+                    });
+                }
+            }
+
+            // Parse IsActive
+            if (!string.IsNullOrWhiteSpace(row.IsActive))
+            {
+                payee.IsActive = ParseBool(row.IsActive, true);
+            }
+
+            // Parse IsPaymentAccount
+            if (!string.IsNullOrWhiteSpace(row.IsPaymentAccount))
+            {
+                payee.IsPaymentAccount = ParseBool(row.IsPaymentAccount, false);
             }
         }
 
-        // Parse IsActive
-        if (!string.IsNullOrWhiteSpace(row.IsActive))
-        {
-            account.IsActive = ParseBool(row.IsActive, true);
-        }
-
-        // Parse IsPaymentAccount
-        if (!string.IsNullOrWhiteSpace(row.IsPaymentAccount))
-        {
-            account.IsPaymentAccount = ParseBool(row.IsPaymentAccount, false);
-        }
-
-        return account;
+        return payee;
     }
 
-    private ImportPayee ParsePayee(ImportRow row, ImportValidationResult result)
-    {
-        return new ImportPayee
-        {
-            Name = row.AccountName!, // Use AccountName as payee name
-            AccountNumber = row.AccountNumber
-        };
-    }
-
-    private ImportBill? ParseBill(ImportRow row, ImportAccount? account, ImportValidationResult result)
+    private ImportBill? ParseBill(ImportRow row, ImportValidationResult result)
     {
         var bill = new ImportBill
         {
-            PayeeName = row.AccountName!, // Use AccountName as payee name
-            AccountDedupeKey = account?.DedupeKey,
+            PayeeName = row.AccountName!,
             PaymentMethodName = row.PaymentMethod,
             Confirmation = row.Confirmation
         };

@@ -5,7 +5,7 @@ namespace BillApp.Core.Models;
 /// </summary>
 public class BackupManifest
 {
-    public string Version { get; set; } = "1.0";
+    public string Version { get; set; } = "2.0";
     public string AppVersion { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string MachineName { get; set; } = Environment.MachineName;
@@ -18,7 +18,6 @@ public class BackupManifest
 public class BackupEntityCounts
 {
     public int Bills { get; set; }
-    public int Accounts { get; set; }
     public int Categories { get; set; }
     public int Payees { get; set; }
 }

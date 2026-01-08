@@ -23,7 +23,6 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly IPayeeRepository _payeeRepository;
     private readonly IBillRepository _billRepository;
-    private readonly IAccountRepository _accountRepository;
 
     [ObservableProperty]
     private string _title = "Settings";
@@ -74,13 +73,13 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _isReassigningPaymentAccounts;
 
     [ObservableProperty]
-    private ObservableCollection<Account> _paymentAccounts = new();
+    private ObservableCollection<Payee> _paymentAccounts = new();
 
     [ObservableProperty]
-    private Account? _sourcePaymentAccount;
+    private Payee? _sourcePaymentAccount;
 
     [ObservableProperty]
-    private Account? _targetPaymentAccount;
+    private Payee? _targetPaymentAccount;
 
     [ObservableProperty]
     private string? _paymentAccountReassignmentResult;
@@ -94,15 +93,13 @@ public partial class SettingsViewModel : ViewModelBase
         IImportService importService,
         ISettingsService settingsService,
         IPayeeRepository payeeRepository,
-        IBillRepository billRepository,
-        IAccountRepository accountRepository)
+        IBillRepository billRepository)
     {
         _backupService = backupService;
         _importService = importService;
         _settingsService = settingsService;
         _payeeRepository = payeeRepository;
         _billRepository = billRepository;
-        _accountRepository = accountRepository;
     }
 
     public override async Task OnNavigatedToAsync(object? parameter = null)
@@ -124,9 +121,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     private async Task LoadPaymentAccountsAsync()
     {
-        var accounts = await _accountRepository.GetAllAsync();
-        var paymentAccounts = accounts.Where(a => a.IsPaymentAccount).OrderBy(a => a.Name);
-        PaymentAccounts = new ObservableCollection<Account>(paymentAccounts);
+        var paymentAccounts = await _payeeRepository.GetPaymentAccountsAsync();
+        PaymentAccounts = new ObservableCollection<Payee>(paymentAccounts.OrderBy(p => p.Name));
         SourcePaymentAccount = null;
         TargetPaymentAccount = null;
         PaymentAccountReassignmentResult = null;
@@ -375,7 +371,7 @@ public partial class SettingsViewModel : ViewModelBase
         {
             var result = importDialog.ExecutionResult;
             var message = $"Import completed successfully!\n\n" +
-                         $"Accounts created: {result.AccountsCreated}\n" +
+                         $"Payees created: {result.PayeesCreated}\n" +
                          $"Bills created: {result.BillsCreated}\n" +
                          $"Payment accounts created: {result.PaymentAccountsCreated}\n\n" +
                          $"The application will now restart to apply changes.";

@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace BillApp.ViewModels;
 
 /// <summary>
-/// Represents a payment method option in the dropdown (None, Cash, or an Account)
+/// Represents a payment method option in the dropdown (None, Cash, or a Payment Account)
 /// </summary>
 public class PaymentMethodItem
 {
@@ -23,7 +23,6 @@ public partial class BillEditViewModel : ViewModelBase
 {
     private readonly IBillRepository _billRepository;
     private readonly ICategoryRepository _categoryRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly IPayeeRepository _payeeRepository;
     private readonly INavigationService _navigationService;
 
@@ -67,9 +66,6 @@ public partial class BillEditViewModel : ViewModelBase
     private string? _notes;
 
     [ObservableProperty]
-    private Guid? _accountId;
-
-    [ObservableProperty]
     private string? _confirmation;
 
     [ObservableProperty]
@@ -100,13 +96,11 @@ public partial class BillEditViewModel : ViewModelBase
     public BillEditViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
-        IAccountRepository accountRepository,
         IPayeeRepository payeeRepository,
         INavigationService navigationService)
     {
         _billRepository = billRepository;
         _categoryRepository = categoryRepository;
-        _accountRepository = accountRepository;
         _payeeRepository = payeeRepository;
         _navigationService = navigationService;
     }
@@ -126,18 +120,19 @@ public partial class BillEditViewModel : ViewModelBase
             Payees = new ObservableCollection<Payee>(payees);
 
             // Load payment methods (None, Cash, then active payment accounts)
-            var accounts = await _accountRepository.GetActiveAsync();
-            var paymentAccounts = accounts.Where(a => a.IsPaymentAccount).ToList();
+            var paymentAccounts = await _payeeRepository.GetPaymentAccountsAsync();
             var paymentMethodList = new List<PaymentMethodItem>
             {
                 new PaymentMethodItem { Name = "(None)" },
                 new PaymentMethodItem { Name = "Cash", IsCash = true }
             };
-            paymentMethodList.AddRange(paymentAccounts.Select(a => new PaymentMethodItem
-            {
-                AccountId = a.Id,
-                Name = a.Name
-            }));
+            paymentMethodList.AddRange(paymentAccounts
+                .Where(p => p.IsActive)
+                .Select(p => new PaymentMethodItem
+                {
+                    AccountId = p.Id,
+                    Name = p.Name
+                }));
             PaymentMethods = new ObservableCollection<PaymentMethodItem>(paymentMethodList);
             SelectedPaymentMethod = PaymentMethods.First(); // Default to (None)
 
@@ -167,7 +162,6 @@ public partial class BillEditViewModel : ViewModelBase
                     Status = bill.Status;
                     PaidDate = bill.PaidDate;
                     Frequency = bill.Frequency;
-                    AccountId = bill.AccountId;
                     Notes = bill.Notes;
                     Confirmation = bill.Confirmation;
 
@@ -264,9 +258,6 @@ public partial class BillEditViewModel : ViewModelBase
             // Check if status is being changed to Paid
             bool beingMarkedAsPaid = Status == PaymentStatus.Paid && _originalStatus != PaymentStatus.Paid;
 
-            // Convert Guid.Empty to null for AccountId (the "None" option)
-            var accountIdToSave = AccountId == Guid.Empty ? null : AccountId;
-
             // Determine payment method values from selection
             bool isCashPayment = SelectedPaymentMethod?.IsCash ?? false;
             Guid? paymentAccountId = SelectedPaymentMethod?.AccountId;
@@ -285,7 +276,6 @@ public partial class BillEditViewModel : ViewModelBase
                     bill.Status = Status;
                     bill.PaidDate = PaidDate;
                     bill.Frequency = Frequency;
-                    bill.AccountId = accountIdToSave;
                     bill.Notes = Notes;
                     bill.Confirmation = Confirmation;
                     bill.IsCashPayment = isCashPayment;
@@ -324,7 +314,6 @@ public partial class BillEditViewModel : ViewModelBase
                     Status = Status,
                     PaidDate = PaidDate,
                     Frequency = Frequency,
-                    AccountId = accountIdToSave,
                     Notes = Notes,
                     Confirmation = Confirmation,
                     IsCashPayment = isCashPayment,

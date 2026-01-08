@@ -19,7 +19,7 @@ public partial class RestoreConfirmationDialog : Window
         CreatedAtText.Text = manifest.CreatedAt.ToLocalTime().ToString("g");
         AppVersionText.Text = manifest.AppVersion;
         BillsCountText.Text = manifest.EntityCounts.Bills.ToString();
-        AccountsCountText.Text = manifest.EntityCounts.Accounts.ToString();
+        PayeesCountText.Text = manifest.EntityCounts.Payees.ToString();
         CategoriesCountText.Text = manifest.EntityCounts.Categories.ToString();
     }
 

@@ -1,0 +1,200 @@
+<UserControl x:Class="BillApp.Views.Payees.PayeeEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:BillApp.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:PayeeEditViewModel}"
+             d:DesignHeight="700" d:DesignWidth="800">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="0,0,0,20"/>
+
+        <!-- Form Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Core Payee Fields -->
+                <GroupBox Header="Basic Information" Padding="15" Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name *" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name}" Padding="8,6" Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Category" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1"
+                                  ItemsSource="{Binding Categories}"
+                                  SelectedValue="{Binding CategoryId}"
+                                  SelectedValuePath="Id"
+                                  DisplayMemberPath="Name"
+                                  Padding="8,6"
+                                  Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Payment URL" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding PaymentUrl}" Padding="8,6" Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Account Number" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding AccountNumber}" Padding="8,6" Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Notes" VerticalAlignment="Top" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="4" Grid.Column="1"
+                                 Text="{Binding Notes}"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 Height="80"
+                                 Padding="8,6"
+                                 Margin="0,0,0,10"/>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Account Toggle -->
+                <CheckBox Content="This payee is a financial account"
+                          IsChecked="{Binding IsAccount}"
+                          Margin="0,0,0,15"
+                          FontWeight="SemiBold"/>
+
+                <!-- Account-Specific Fields (visible when IsAccount is true) -->
+                <GroupBox Header="Account Details"
+                          Padding="15"
+                          Margin="0,0,0,20"
+                          Visibility="{Binding IsAccount, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 0: Account Type and Institution -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Account Type" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding AccountTypeOptions}"
+                                  SelectedItem="{Binding AccountType}"
+                                  Padding="8,6"
+                                  Margin="0,0,15,10"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Institution" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Institution}" Padding="8,6" Margin="0,0,0,10"/>
+
+                        <!-- Row 1: Balance and Credit Limit -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Balance" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Text="{Binding Balance, StringFormat='{}{0:N2}'}"
+                                 Padding="8,6"
+                                 Margin="0,0,15,10"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Credit Limit" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="1" Grid.Column="3"
+                                 Text="{Binding CreditLimit, TargetNullValue='', StringFormat='{}{0:N2}'}"
+                                 Padding="8,6"
+                                 Margin="0,0,0,10"/>
+
+                        <!-- Row 2: Interest Rate -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Interest Rate (%)" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"
+                                 Text="{Binding InterestRate, TargetNullValue='', StringFormat='{}{0:N2}'}"
+                                 Padding="8,6"
+                                 Margin="0,0,15,10"/>
+
+                        <!-- Row 3: Credentials -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Username" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Username}" Padding="8,6" Margin="0,0,15,10"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="2" Text="Password" VerticalAlignment="Center" Margin="0,0,0,10"/>
+                        <PasswordBox Grid.Row="3" Grid.Column="3"
+                                     x:Name="PasswordBox"
+                                     Padding="8,6"
+                                     Margin="0,0,0,10"
+                                     PasswordChanged="PasswordBox_PasswordChanged"/>
+
+                        <!-- Row 4: Checkboxes -->
+                        <CheckBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                                  Content="Active"
+                                  IsChecked="{Binding IsActive}"
+                                  Margin="0,5,0,10"/>
+
+                        <CheckBox Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2"
+                                  Content="Can be used as payment method"
+                                  IsChecked="{Binding IsPaymentAccount}"
+                                  Margin="0,5,0,10"/>
+
+                        <!-- Row 5: Info -->
+                        <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
+                                Background="#E3F2FD"
+                                Padding="10"
+                                CornerRadius="4"
+                                Margin="0,5,0,0">
+                            <TextBlock TextWrapping="Wrap" Foreground="#1565C0" FontSize="12">
+                                <Run FontWeight="SemiBold">Note:</Run>
+                                <Run>Credentials are encrypted and stored securely. Balance represents current debt for credit cards/loans or available funds for checking/savings.</Run>
+                            </TextBlock>
+                        </Border>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Validation Error -->
+                <Border Background="#FFEBEE"
+                        Padding="15"
+                        CornerRadius="4"
+                        Margin="0,0,0,20"
+                        Visibility="{Binding ValidationError, Converter={StaticResource NullToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ValidationError}" Foreground="#C62828" TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    Padding="20,10"
+                    Margin="0,0,10,0"/>
+            <Button Content="Save"
+                    Command="{Binding SaveCommand}"
+                    Padding="20,10"
+                    Background="#1976D2"
+                    Foreground="White"/>
+        </StackPanel>
+
+        <!-- Loading Indicator -->
+        <Border Grid.RowSpan="3"
+                Background="#88FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Loading..."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="18"/>
+        </Border>
+    </Grid>
+</UserControl>

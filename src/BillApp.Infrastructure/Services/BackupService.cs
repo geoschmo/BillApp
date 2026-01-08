@@ -16,7 +16,6 @@ namespace BillApp.Infrastructure.Services;
 public class BackupService : IBackupService
 {
     private readonly IBillRepository _billRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IPayeeRepository _payeeRepository;
     private readonly IEncryptionService _encryptionService;
@@ -28,13 +27,11 @@ public class BackupService : IBackupService
 
     public BackupService(
         IBillRepository billRepository,
-        IAccountRepository accountRepository,
         ICategoryRepository categoryRepository,
         IPayeeRepository payeeRepository,
         IEncryptionService encryptionService)
     {
         _billRepository = billRepository;
-        _accountRepository = accountRepository;
         _categoryRepository = categoryRepository;
         _payeeRepository = payeeRepository;
         _encryptionService = encryptionService;
@@ -162,13 +159,23 @@ public class BackupService : IBackupService
             throw new InvalidBackupPasswordException();
         }
 
-        // Deserialize data
+        // Deserialize data - handle both v1.0 and v2.0 formats
         var dataJson = Encoding.UTF8.GetString(decryptedBytes);
-        var backupData = JsonSerializer.Deserialize<BackupData>(dataJson)
-            ?? throw new CorruptedBackupException("Invalid backup data");
 
-        // Import data
-        await ImportDataAsync(backupData, backupPassword);
+        if (manifest.Version == "1.0")
+        {
+            // Parse as v1.0 format with Accounts array
+            var v1Data = JsonSerializer.Deserialize<BackupDataV1>(dataJson)
+                ?? throw new CorruptedBackupException("Invalid backup data");
+            await ImportDataV1Async(v1Data, backupPassword);
+        }
+        else
+        {
+            // Parse as v2.0 format
+            var backupData = JsonSerializer.Deserialize<BackupData>(dataJson)
+                ?? throw new CorruptedBackupException("Invalid backup data");
+            await ImportDataAsync(backupData, backupPassword);
+        }
     }
 
     /// <summary>
@@ -211,37 +218,11 @@ public class BackupService : IBackupService
                 Status = (int)bill.Status,
                 PaidDate = bill.PaidDate,
                 Frequency = (int)bill.Frequency,
-                AccountId = bill.AccountId,
                 Notes = bill.Notes,
                 PreviousBillId = bill.PreviousBillId,
                 Confirmation = bill.Confirmation,
                 PaymentAccountId = bill.PaymentAccountId,
                 IsCashPayment = bill.IsCashPayment
-            });
-        }
-
-        // Export accounts (re-encrypt sensitive fields with backup password)
-        var accounts = await _accountRepository.GetAllAsync();
-        foreach (var account in accounts)
-        {
-            backupData.Accounts.Add(new AccountBackupDto
-            {
-                Id = account.Id,
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                Name = account.Name,
-                AccountType = (int)account.AccountType,
-                AccountNumber = ReEncryptForBackup(account.AccountNumber, backupPassword),
-                Institution = account.Institution,
-                Balance = account.Balance,
-                CreditLimit = account.CreditLimit,
-                InterestRate = account.InterestRate,
-                LoginUrl = account.LoginUrl,
-                Username = ReEncryptForBackup(account.Username, backupPassword),
-                Password = ReEncryptForBackup(account.Password, backupPassword),
-                Notes = account.Notes,
-                IsActive = account.IsActive,
-                IsPaymentAccount = account.IsPaymentAccount
             });
         }
 
@@ -261,7 +242,7 @@ public class BackupService : IBackupService
             });
         }
 
-        // Export payees
+        // Export payees (with account fields, re-encrypt sensitive fields with backup password)
         var payees = await _payeeRepository.GetAllAsync();
         foreach (var payee in payees)
         {
@@ -273,8 +254,18 @@ public class BackupService : IBackupService
                 Name = payee.Name,
                 CategoryId = payee.CategoryId,
                 PaymentUrl = payee.PaymentUrl,
-                AccountNumber = payee.AccountNumber,
-                Notes = payee.Notes
+                AccountNumber = ReEncryptForBackup(payee.AccountNumber, backupPassword),
+                Notes = payee.Notes,
+                IsAccount = payee.IsAccount,
+                AccountType = payee.AccountType.HasValue ? (int)payee.AccountType.Value : null,
+                Balance = payee.Balance,
+                CreditLimit = payee.CreditLimit,
+                InterestRate = payee.InterestRate,
+                Institution = payee.Institution,
+                Username = ReEncryptForBackup(payee.Username, backupPassword),
+                Password = ReEncryptForBackup(payee.Password, backupPassword),
+                IsActive = payee.IsActive,
+                IsPaymentAccount = payee.IsPaymentAccount
             });
         }
 
@@ -284,8 +275,6 @@ public class BackupService : IBackupService
     private async Task ImportDataAsync(BackupData backupData, string backupPassword)
     {
         // Clear existing data (in reverse order of dependencies)
-        // Use ToList() to materialize the enumerable before iterating,
-        // as LiteDB returns lazy enumerables that can't be modified during iteration
         var existingBills = (await _billRepository.GetAllAsync()).ToList();
         foreach (var bill in existingBills)
             await _billRepository.DeleteAsync(bill.Id);
@@ -293,10 +282,6 @@ public class BackupService : IBackupService
         var existingPayees = (await _payeeRepository.GetAllAsync()).ToList();
         foreach (var payee in existingPayees)
             await _payeeRepository.DeleteAsync(payee.Id);
-
-        var existingAccounts = (await _accountRepository.GetAllAsync()).ToList();
-        foreach (var account in existingAccounts)
-            await _accountRepository.DeleteAsync(account.Id);
 
         var existingCategories = (await _categoryRepository.GetAllAsync()).ToList();
         foreach (var category in existingCategories)
@@ -318,32 +303,7 @@ public class BackupService : IBackupService
             await _categoryRepository.InsertAsync(category);
         }
 
-        // Import accounts (re-encrypt sensitive fields with local key)
-        foreach (var dto in backupData.Accounts)
-        {
-            var account = new Account
-            {
-                Id = dto.Id,
-                CreatedAt = dto.CreatedAt,
-                UpdatedAt = dto.UpdatedAt,
-                Name = dto.Name,
-                AccountType = (AccountType)dto.AccountType,
-                AccountNumber = ReEncryptFromBackup(dto.AccountNumber, backupPassword),
-                Institution = dto.Institution,
-                Balance = dto.Balance,
-                CreditLimit = dto.CreditLimit,
-                InterestRate = dto.InterestRate,
-                LoginUrl = dto.LoginUrl,
-                Username = ReEncryptFromBackup(dto.Username, backupPassword),
-                Password = ReEncryptFromBackup(dto.Password, backupPassword),
-                Notes = dto.Notes,
-                IsActive = dto.IsActive,
-                IsPaymentAccount = dto.IsPaymentAccount
-            };
-            await _accountRepository.InsertAsync(account);
-        }
-
-        // Import payees
+        // Import payees (with account fields, re-encrypt sensitive fields with local key)
         foreach (var dto in backupData.Payees)
         {
             var payee = new Payee
@@ -354,8 +314,18 @@ public class BackupService : IBackupService
                 Name = dto.Name,
                 CategoryId = dto.CategoryId,
                 PaymentUrl = dto.PaymentUrl,
-                AccountNumber = dto.AccountNumber,
-                Notes = dto.Notes
+                AccountNumber = ReEncryptFromBackup(dto.AccountNumber, backupPassword),
+                Notes = dto.Notes,
+                IsAccount = dto.IsAccount,
+                AccountType = dto.AccountType.HasValue ? (AccountType)dto.AccountType.Value : null,
+                Balance = dto.Balance,
+                CreditLimit = dto.CreditLimit,
+                InterestRate = dto.InterestRate,
+                Institution = dto.Institution,
+                Username = ReEncryptFromBackup(dto.Username, backupPassword),
+                Password = ReEncryptFromBackup(dto.Password, backupPassword),
+                IsActive = dto.IsActive,
+                IsPaymentAccount = dto.IsPaymentAccount
             };
             await _payeeRepository.InsertAsync(payee);
         }
@@ -376,13 +346,160 @@ public class BackupService : IBackupService
                 Status = (PaymentStatus)dto.Status,
                 PaidDate = dto.PaidDate,
                 Frequency = (RecurrenceFrequency)dto.Frequency,
-                AccountId = dto.AccountId,
                 Notes = dto.Notes,
                 PreviousBillId = dto.PreviousBillId,
                 Confirmation = dto.Confirmation,
                 PaymentAccountId = dto.PaymentAccountId,
                 IsCashPayment = dto.IsCashPayment
             };
+            await _billRepository.InsertAsync(bill);
+        }
+    }
+
+    /// <summary>
+    /// Imports data from v1.0 backup format, migrating Accounts into Payees.
+    /// </summary>
+    private async Task ImportDataV1Async(BackupDataV1 backupData, string backupPassword)
+    {
+        // Clear existing data
+        var existingBills = (await _billRepository.GetAllAsync()).ToList();
+        foreach (var bill in existingBills)
+            await _billRepository.DeleteAsync(bill.Id);
+
+        var existingPayees = (await _payeeRepository.GetAllAsync()).ToList();
+        foreach (var payee in existingPayees)
+            await _payeeRepository.DeleteAsync(payee.Id);
+
+        var existingCategories = (await _categoryRepository.GetAllAsync()).ToList();
+        foreach (var category in existingCategories)
+            await _categoryRepository.DeleteAsync(category.Id);
+
+        // Import categories first
+        foreach (var dto in backupData.Categories)
+        {
+            var category = new Category
+            {
+                Id = dto.Id,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt,
+                Name = dto.Name,
+                Description = dto.Description,
+                Color = dto.Color,
+                IsDefault = dto.IsDefault
+            };
+            await _categoryRepository.InsertAsync(category);
+        }
+
+        // Map old Account IDs to new Payee IDs
+        var accountToPayeeMap = new Dictionary<Guid, Guid>();
+        var payeesByName = backupData.Payees.ToDictionary(p => p.Name.ToLower(), p => p);
+
+        // Import payees first
+        foreach (var dto in backupData.Payees)
+        {
+            var payee = new Payee
+            {
+                Id = dto.Id,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt,
+                Name = dto.Name,
+                CategoryId = dto.CategoryId,
+                PaymentUrl = dto.PaymentUrl,
+                AccountNumber = dto.AccountNumber,
+                Notes = dto.Notes,
+                IsAccount = false,
+                IsActive = true,
+                IsPaymentAccount = false
+            };
+            await _payeeRepository.InsertAsync(payee);
+        }
+
+        // Now process accounts - merge with existing payees or create new ones
+        foreach (var accountDto in backupData.Accounts)
+        {
+            if (payeesByName.TryGetValue(accountDto.Name.ToLower(), out var existingPayeeDto))
+            {
+                // Merge account data into existing payee
+                var payee = await _payeeRepository.GetByIdAsync(existingPayeeDto.Id);
+                if (payee != null)
+                {
+                    payee.IsAccount = true;
+                    payee.AccountType = (AccountType)accountDto.AccountType;
+                    payee.Balance = accountDto.Balance;
+                    payee.CreditLimit = accountDto.CreditLimit;
+                    payee.InterestRate = accountDto.InterestRate;
+                    payee.Institution = accountDto.Institution;
+                    payee.Username = ReEncryptFromBackup(accountDto.Username, backupPassword);
+                    payee.Password = ReEncryptFromBackup(accountDto.Password, backupPassword);
+                    payee.IsActive = accountDto.IsActive;
+                    payee.IsPaymentAccount = accountDto.IsPaymentAccount;
+
+                    if (string.IsNullOrEmpty(payee.PaymentUrl))
+                        payee.PaymentUrl = accountDto.LoginUrl;
+
+                    if (string.IsNullOrEmpty(payee.AccountNumber))
+                        payee.AccountNumber = ReEncryptFromBackup(accountDto.AccountNumber, backupPassword);
+
+                    await _payeeRepository.UpdateAsync(payee);
+                    accountToPayeeMap[accountDto.Id] = payee.Id;
+                }
+            }
+            else
+            {
+                // Create new payee from account
+                var newPayee = new Payee
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedAt = accountDto.CreatedAt,
+                    UpdatedAt = accountDto.UpdatedAt,
+                    Name = accountDto.Name,
+                    IsAccount = true,
+                    AccountType = (AccountType)accountDto.AccountType,
+                    AccountNumber = ReEncryptFromBackup(accountDto.AccountNumber, backupPassword),
+                    Balance = accountDto.Balance,
+                    CreditLimit = accountDto.CreditLimit,
+                    InterestRate = accountDto.InterestRate,
+                    Institution = accountDto.Institution,
+                    PaymentUrl = accountDto.LoginUrl,
+                    Username = ReEncryptFromBackup(accountDto.Username, backupPassword),
+                    Password = ReEncryptFromBackup(accountDto.Password, backupPassword),
+                    Notes = accountDto.Notes,
+                    IsActive = accountDto.IsActive,
+                    IsPaymentAccount = accountDto.IsPaymentAccount
+                };
+                await _payeeRepository.InsertAsync(newPayee);
+                accountToPayeeMap[accountDto.Id] = newPayee.Id;
+            }
+        }
+
+        // Import bills (update PaymentAccountId to new Payee IDs)
+        foreach (var dto in backupData.Bills)
+        {
+            var bill = new Bill
+            {
+                Id = dto.Id,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt,
+                PayeeId = dto.PayeeId,
+                AmountDue = dto.AmountDue,
+                AmountPaid = dto.AmountPaid,
+                Balance = dto.Balance,
+                DueDate = dto.DueDate,
+                Status = (PaymentStatus)dto.Status,
+                PaidDate = dto.PaidDate,
+                Frequency = (RecurrenceFrequency)dto.Frequency,
+                Notes = dto.Notes,
+                PreviousBillId = dto.PreviousBillId,
+                Confirmation = dto.Confirmation,
+                IsCashPayment = dto.IsCashPayment
+            };
+
+            // Map PaymentAccountId from old Account ID to new Payee ID
+            if (dto.PaymentAccountId.HasValue && accountToPayeeMap.TryGetValue(dto.PaymentAccountId.Value, out var newPayeeId))
+            {
+                bill.PaymentAccountId = newPayeeId;
+            }
+
             await _billRepository.InsertAsync(bill);
         }
     }
@@ -433,7 +550,7 @@ public class BackupService : IBackupService
 
         return new BackupManifest
         {
-            Version = "1.0",
+            Version = "2.0",
             AppVersion = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0",
             CreatedAt = DateTime.UtcNow,
             MachineName = Environment.MachineName,
@@ -441,7 +558,6 @@ public class BackupService : IBackupService
             EntityCounts = new BackupEntityCounts
             {
                 Bills = backupData.Bills.Count,
-                Accounts = backupData.Accounts.Count,
                 Categories = backupData.Categories.Count,
                 Payees = backupData.Payees.Count
             }
@@ -450,13 +566,78 @@ public class BackupService : IBackupService
 
     private void ValidateBackupVersion(BackupManifest manifest)
     {
-        // Currently we only support version 1.0
-        if (manifest.Version != "1.0")
+        // Support both v1.0 and v2.0
+        if (manifest.Version != "1.0" && manifest.Version != "2.0")
         {
             var currentVersion = Assembly.GetEntryAssembly()?.GetName().Version;
             throw new IncompatibleBackupVersionException(
                 manifest.Version,
-                currentVersion?.ToString() ?? "1.0.0");
+                currentVersion?.ToString() ?? "2.0.0");
         }
     }
+}
+
+/// <summary>
+/// V1.0 backup data format with separate Accounts collection.
+/// Used for backward compatibility when restoring old backups.
+/// </summary>
+internal class BackupDataV1
+{
+    public List<BillBackupDtoV1> Bills { get; set; } = new();
+    public List<AccountBackupDtoV1> Accounts { get; set; } = new();
+    public List<CategoryBackupDto> Categories { get; set; } = new();
+    public List<PayeeBackupDtoV1> Payees { get; set; } = new();
+}
+
+internal class BillBackupDtoV1
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public Guid PayeeId { get; set; }
+    public decimal AmountDue { get; set; }
+    public decimal AmountPaid { get; set; }
+    public decimal Balance { get; set; }
+    public DateTime DueDate { get; set; }
+    public int Status { get; set; }
+    public DateTime? PaidDate { get; set; }
+    public int Frequency { get; set; }
+    public Guid? AccountId { get; set; }
+    public string? Notes { get; set; }
+    public Guid? PreviousBillId { get; set; }
+    public string? Confirmation { get; set; }
+    public Guid? PaymentAccountId { get; set; }
+    public bool IsCashPayment { get; set; }
+}
+
+internal class AccountBackupDtoV1
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int AccountType { get; set; }
+    public string? AccountNumber { get; set; }
+    public string? Institution { get; set; }
+    public decimal Balance { get; set; }
+    public decimal? CreditLimit { get; set; }
+    public decimal? InterestRate { get; set; }
+    public string? LoginUrl { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public string? Notes { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsPaymentAccount { get; set; }
+}
+
+internal class PayeeBackupDtoV1
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid? CategoryId { get; set; }
+    public string? PaymentUrl { get; set; }
+    public string? AccountNumber { get; set; }
+    public string? Notes { get; set; }
 }

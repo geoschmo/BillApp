@@ -59,8 +59,8 @@
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Bills:" FontWeight="SemiBold" Margin="0,0,15,5"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" x:Name="BillsCountText" Margin="0,0,0,5"/>
 
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Accounts:" FontWeight="SemiBold" Margin="0,0,15,5"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="AccountsCountText" Margin="0,0,0,5"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Payees:" FontWeight="SemiBold" Margin="0,0,15,5"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PayeesCountText" Margin="0,0,0,5"/>
 
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Categories:" FontWeight="SemiBold" Margin="0,0,15,0"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" x:Name="CategoriesCountText"/>
@@ -71,7 +71,7 @@
         <TextBlock Grid.Row="2"
                    TextWrapping="Wrap"
                    Margin="0,0,0,15">
-            <Run Text="All existing bills, accounts, and categories will be "/>
+            <Run Text="All existing bills, payees, and categories will be "/>
             <Run Text="permanently deleted" FontWeight="Bold"/>
             <Run Text=" and replaced with the backup data. This cannot be undone."/>
         </TextBlock>

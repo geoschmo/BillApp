@@ -19,20 +19,16 @@ public class LiteDbContext : IDisposable
         // These are loaded separately, not stored in the database
         BsonMapper.Global.Entity<Bill>()
             .Ignore(x => x.Payee)
-            .Ignore(x => x.Account)
             .Ignore(x => x.PaymentAccount)
             .Ignore(x => x.IsOverdue)
             .Ignore(x => x.DaysUntilDue)
             .Ignore(x => x.IsRecurring);
 
-        BsonMapper.Global.Entity<Account>()
-            .Ignore(x => x.Bills)
+        BsonMapper.Global.Entity<Payee>()
+            .Ignore(x => x.Category)
             .Ignore(x => x.AvailableCredit)
             .Ignore(x => x.IsAsset)
             .Ignore(x => x.IsLiability);
-
-        BsonMapper.Global.Entity<Payee>()
-            .Ignore(x => x.Category);
     }
 
     public LiteDbContext(string? databasePath = null, string? password = null)

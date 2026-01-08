@@ -22,10 +22,9 @@ public class DatabaseInitializer
     {
         var categories = _context.GetCollection<Category>();
         var bills = _context.GetCollection<Bill>();
-        var accounts = _context.GetCollection<Account>();
         var payees = _context.GetCollection<Payee>();
 
-        return categories.Count() == 0 && bills.Count() == 0 && accounts.Count() == 0 && payees.Count() == 0;
+        return categories.Count() == 0 && bills.Count() == 0 && payees.Count() == 0;
     }
 
     /// <summary>
@@ -49,62 +48,12 @@ public class DatabaseInitializer
     public void SeedSampleData()
     {
         var categories = _context.GetCollection<Category>();
-        var accounts = _context.GetCollection<Account>();
         var payees = _context.GetCollection<Payee>();
         var bills = _context.GetCollection<Bill>();
 
         // Seed categories first
         var defaultCategories = GetDefaultCategories();
         categories.InsertBulk(defaultCategories);
-
-        // Create sample accounts
-        var checkingAccount = new Account
-        {
-            Name = "Main Checking",
-            AccountType = AccountType.Checking,
-            Institution = "First National Bank",
-            Balance = 2500.00m,
-            IsActive = true,
-            Notes = "Primary checking account for bill payments"
-        };
-
-        var creditCard = new Account
-        {
-            Name = "Rewards Visa",
-            AccountType = AccountType.CreditCard,
-            Institution = "Capital One",
-            Balance = 1250.75m,
-            CreditLimit = 5000.00m,
-            InterestRate = 19.99m,
-            IsActive = true,
-            Notes = "2% cash back on all purchases"
-        };
-
-        var savingsAccount = new Account
-        {
-            Name = "Emergency Savings",
-            AccountType = AccountType.Savings,
-            Institution = "First National Bank",
-            Balance = 10000.00m,
-            InterestRate = 4.5m,
-            IsActive = true
-        };
-
-        var carLoan = new Account
-        {
-            Name = "Auto Loan",
-            AccountType = AccountType.Loan,
-            Institution = "Credit Union",
-            Balance = 15420.00m,
-            InterestRate = 5.9m,
-            IsActive = true,
-            Notes = "2022 Honda Civic - 48 month term"
-        };
-
-        accounts.Insert(checkingAccount);
-        accounts.Insert(creditCard);
-        accounts.Insert(savingsAccount);
-        accounts.Insert(carLoan);
 
         // Get category IDs
         var utilitiesCategory = defaultCategories.First(c => c.Name == "Utilities");
@@ -115,7 +64,60 @@ public class DatabaseInitializer
         var creditCardsCategory = defaultCategories.First(c => c.Name == "Credit Cards");
         var insuranceCategory = defaultCategories.First(c => c.Name == "Insurance");
 
-        // Create sample payees
+        // Create payees - some are also accounts
+        var checkingAccount = new Payee
+        {
+            Name = "Main Checking",
+            IsAccount = true,
+            AccountType = AccountType.Checking,
+            Institution = "First National Bank",
+            Balance = 2500.00m,
+            IsActive = true,
+            IsPaymentAccount = true,
+            Notes = "Primary checking account for bill payments"
+        };
+
+        var creditCard = new Payee
+        {
+            Name = "Rewards Visa",
+            CategoryId = creditCardsCategory.Id,
+            IsAccount = true,
+            AccountType = AccountType.CreditCard,
+            Institution = "Capital One",
+            Balance = 1250.75m,
+            CreditLimit = 5000.00m,
+            InterestRate = 19.99m,
+            IsActive = true,
+            IsPaymentAccount = true,
+            Notes = "2% cash back on all purchases"
+        };
+
+        var savingsAccount = new Payee
+        {
+            Name = "Emergency Savings",
+            IsAccount = true,
+            AccountType = AccountType.Savings,
+            Institution = "First National Bank",
+            Balance = 10000.00m,
+            InterestRate = 4.5m,
+            IsActive = true,
+            IsPaymentAccount = false
+        };
+
+        var carLoan = new Payee
+        {
+            Name = "Credit Union Auto Loan",
+            CategoryId = transportationCategory.Id,
+            IsAccount = true,
+            AccountType = AccountType.Loan,
+            Institution = "Credit Union",
+            Balance = 15420.00m,
+            InterestRate = 5.9m,
+            IsActive = true,
+            Notes = "2022 Honda Civic - Payment 24 of 48"
+        };
+
+        // Non-account payees
         var oakwoodApartments = new Payee
         {
             Name = "Oakwood Apartments",
@@ -155,20 +157,6 @@ public class DatabaseInitializer
             CategoryId = subscriptionsCategory.Id
         };
 
-        var creditUnionAutoLoan = new Payee
-        {
-            Name = "Credit Union Auto Loan",
-            CategoryId = transportationCategory.Id,
-            Notes = "Payment 24 of 48"
-        };
-
-        var capitalOneVisa = new Payee
-        {
-            Name = "Capital One Visa",
-            CategoryId = creditCardsCategory.Id,
-            Notes = "Minimum payment due"
-        };
-
         var geico = new Payee
         {
             Name = "GEICO",
@@ -183,9 +171,9 @@ public class DatabaseInitializer
 
         payees.InsertBulk(new[]
         {
+            checkingAccount, creditCard, savingsAccount, carLoan,
             oakwoodApartments, cityPower, spectrumInternet, verizonWireless,
-            netflix, spotifyPremium, creditUnionAutoLoan, capitalOneVisa,
-            geico, cityWater
+            netflix, spotifyPremium, geico, cityWater
         });
 
         var today = DateTime.Today;
@@ -204,7 +192,8 @@ public class DatabaseInitializer
                 DueDate = thisMonth.AddDays(1),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(1),
-                Frequency = RecurrenceFrequency.Monthly
+                Frequency = RecurrenceFrequency.Monthly,
+                PaymentAccountId = checkingAccount.Id
             },
 
             // Electric - pending
@@ -241,7 +230,8 @@ public class DatabaseInitializer
                 DueDate = thisMonth.AddDays(14),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(12),
-                Frequency = RecurrenceFrequency.Monthly
+                Frequency = RecurrenceFrequency.Monthly,
+                PaymentAccountId = checkingAccount.Id
             },
 
             // Netflix - pending
@@ -256,7 +246,7 @@ public class DatabaseInitializer
                 Frequency = RecurrenceFrequency.Monthly
             },
 
-            // Spotify - paid
+            // Spotify - paid with credit card
             new()
             {
                 PayeeId = spotifyPremium.Id,
@@ -266,33 +256,32 @@ public class DatabaseInitializer
                 DueDate = thisMonth.AddDays(7),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(7),
-                Frequency = RecurrenceFrequency.Monthly
+                Frequency = RecurrenceFrequency.Monthly,
+                PaymentAccountId = creditCard.Id
             },
 
-            // Car payment - pending, linked to loan account
+            // Car payment - pending (payee is also the loan account)
             new()
             {
-                PayeeId = creditUnionAutoLoan.Id,
+                PayeeId = carLoan.Id,
                 AmountDue = 385.00m,
                 AmountPaid = 0,
                 Balance = 15420.00m,
                 DueDate = today.AddDays(8),
                 Status = PaymentStatus.Pending,
-                Frequency = RecurrenceFrequency.Monthly,
-                AccountId = carLoan.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
-            // Credit card - pending, linked to credit card account
+            // Credit card payment - pending (payee is also the credit card account)
             new()
             {
-                PayeeId = capitalOneVisa.Id,
+                PayeeId = creditCard.Id,
                 AmountDue = 150.00m,
                 AmountPaid = 0,
                 Balance = 1250.75m,
                 DueDate = today.AddDays(12),
                 Status = PaymentStatus.Pending,
-                Frequency = RecurrenceFrequency.Monthly,
-                AccountId = creditCard.Id
+                Frequency = RecurrenceFrequency.Monthly
             },
 
             // Car insurance - paid
@@ -305,7 +294,8 @@ public class DatabaseInitializer
                 DueDate = thisMonth.AddDays(20),
                 Status = PaymentStatus.Paid,
                 PaidDate = thisMonth.AddDays(18),
-                Frequency = RecurrenceFrequency.Monthly
+                Frequency = RecurrenceFrequency.Monthly,
+                PaymentAccountId = checkingAccount.Id
             },
 
             // Water bill - overdue

@@ -85,8 +85,8 @@ public partial class ImportDialog : Window
             // Update summary
             var summaryParts = new List<string>();
 
-            if (_validationResult.Accounts.Count > 0)
-                summaryParts.Add($"{_validationResult.Accounts.Count} account(s)");
+            if (_validationResult.Payees.Count > 0)
+                summaryParts.Add($"{_validationResult.Payees.Count} payee(s)");
 
             if (_validationResult.Bills.Count > 0)
                 summaryParts.Add($"{_validationResult.Bills.Count} bill(s)");
@@ -134,7 +134,7 @@ public partial class ImportDialog : Window
         if (SelectedMode == ImportMode.ReplaceAll)
         {
             var confirmResult = MessageBox.Show(
-                "This will DELETE all existing accounts and bills before importing. Are you sure?",
+                "This will DELETE all existing payees and bills before importing. Are you sure?",
                 "Confirm Replace All",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
