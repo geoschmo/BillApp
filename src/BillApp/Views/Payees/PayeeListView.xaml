@@ -114,13 +114,31 @@
                     </DataGridTextColumn.Binding>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Account Type" Binding="{Binding AccountType}" Width="100"/>
-                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat='{}{0:C}'}" Width="100">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <DataGridTemplateColumn Header="Balance" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Balance, StringFormat='{}{0:C}'}"
+                                       HorizontalAlignment="Right"
+                                       Padding="0,0,5,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <!-- Hide balance for non-financial accounts (not asset and not liability) -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsAsset}" Value="False"/>
+                                                    <Condition Binding="{Binding IsLiability}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Hidden"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Last Paid" Binding="{Binding LastPaidDate, StringFormat='{}{0:d}'}" Width="90"/>
                 <DataGridTextColumn Header="Institution" Binding="{Binding Institution}" Width="120"/>
                 <DataGridCheckBoxColumn Header="Payment" Binding="{Binding IsPaymentAccount, Mode=OneWay}" Width="60"/>
                 <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive, Mode=OneWay}" Width="50"/>

@@ -203,7 +203,7 @@ public partial class BillListViewModel : ViewModelBase
 
         // Show pay dialog with default values
         var payeeName = bill.Payee?.Name ?? "Unknown";
-        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.DueDate, paymentMethods, defaultPaymentMethod);
+        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.Balance, bill.DueDate, paymentMethods, defaultPaymentMethod);
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() != true)
@@ -211,6 +211,7 @@ public partial class BillListViewModel : ViewModelBase
 
         // Mark current bill as paid with values from dialog
         bill.Status = PaymentStatus.Paid;
+        bill.Balance = dialog.Balance;
         bill.AmountPaid = dialog.PaidAmount;
         bill.PaidDate = dialog.PaidDate;
         bill.Confirmation = dialog.Confirmation;
@@ -224,13 +225,7 @@ public partial class BillListViewModel : ViewModelBase
 
         await _billRepository.UpdateAsync(bill);
 
-        // Update payee balance if it's an account (liability)
         var payee = await _payeeRepository.GetByIdAsync(bill.PayeeId);
-        if (payee?.IsAccount == true && payee.IsLiability)
-        {
-            payee.Balance = Math.Max(0, payee.Balance - bill.AmountPaid); // Payment reduces debt, min 0
-            await _payeeRepository.UpdateAsync(payee);
-        }
 
         // Update payment account balance
         if (!bill.IsCashPayment && bill.PaymentAccountId.HasValue)
@@ -253,6 +248,13 @@ public partial class BillListViewModel : ViewModelBase
             var carryBalance = payee?.IsAccount == true;
             var nextBill = bill.CreateNextRecurrence(carryBalance);
             await _billRepository.InsertAsync(nextBill);
+
+            // Update the payee account balance to match the new bill's balance
+            if (carryBalance && payee != null)
+            {
+                payee.Balance = nextBill.Balance;
+                await _payeeRepository.UpdateAsync(payee);
+            }
         }
 
         // Refresh the list to update UI
@@ -358,6 +360,18 @@ public partial class BillListViewModel : ViewModelBase
                 var carryBalance = bill.Payee?.IsAccount == true;
                 var nextBill = bill.CreateNextRecurrence(carryBalance);
                 await _billRepository.InsertAsync(nextBill);
+
+                // Update the payee account balance to match the new bill's balance
+                if (carryBalance && bill.Payee != null)
+                {
+                    var payee = await _payeeRepository.GetByIdAsync(bill.PayeeId);
+                    if (payee != null)
+                    {
+                        payee.Balance = nextBill.Balance;
+                        await _payeeRepository.UpdateAsync(payee);
+                    }
+                }
+
                 await LoadBillsAsync(); // Refresh to show the new bill
             }
             else

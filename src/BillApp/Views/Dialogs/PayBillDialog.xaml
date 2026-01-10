@@ -30,6 +30,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Bill Info -->
@@ -39,41 +41,48 @@
                    FontWeight="SemiBold"
                    Margin="0,0,0,20"/>
 
-        <!-- Paid Amount -->
+        <!-- Balance -->
         <TextBlock Grid.Row="1"
-                   Text="Paid Amount:"
+                   Text="Balance:"
                    Style="{StaticResource LabelStyle}"/>
         <TextBox Grid.Row="2"
+                 x:Name="BalanceBox"/>
+
+        <!-- Paid Amount -->
+        <TextBlock Grid.Row="3"
+                   Text="Paid Amount:"
+                   Style="{StaticResource LabelStyle}"/>
+        <TextBox Grid.Row="4"
                  x:Name="PaidAmountBox"/>
 
         <!-- Paid Date -->
-        <TextBlock Grid.Row="3"
+        <TextBlock Grid.Row="5"
                    Text="Paid Date:"
                    Style="{StaticResource LabelStyle}"/>
-        <DatePicker Grid.Row="4"
+        <DatePicker Grid.Row="6"
                     x:Name="PaidDatePicker"
                     Padding="8,6"
                     Margin="0,0,0,15"/>
 
         <!-- Pay Method -->
-        <TextBlock Grid.Row="5"
+        <TextBlock Grid.Row="7"
                    Text="Pay Method:"
                    Style="{StaticResource LabelStyle}"/>
-        <ComboBox Grid.Row="6"
+        <ComboBox Grid.Row="8"
                   x:Name="PayMethodCombo"
                   DisplayMemberPath="Name"
                   Padding="8,6"
                   Margin="0,0,0,15"/>
 
         <!-- Confirmation -->
-        <TextBlock Grid.Row="7"
+        <TextBlock Grid.Row="9"
                    Text="Confirmation #:"
                    Style="{StaticResource LabelStyle}"/>
-        <TextBox Grid.Row="8"
+        <TextBox Grid.Row="10"
                  x:Name="ConfirmationBox"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="9"
+        <StackPanel Grid.Row="11"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
             <Button Content="Pay"

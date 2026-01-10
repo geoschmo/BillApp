@@ -306,6 +306,13 @@ public partial class BillEditViewModel : ViewModelBase
                         var carryBalance = payee.IsAccount;
                         var nextBill = bill.CreateNextRecurrence(carryBalance);
                         await _billRepository.InsertAsync(nextBill);
+
+                        // Update the payee account balance to match the new bill's balance
+                        if (carryBalance)
+                        {
+                            payee.Balance = nextBill.Balance;
+                            await _payeeRepository.UpdateAsync(payee);
+                        }
                     }
                 }
             }
@@ -346,6 +353,13 @@ public partial class BillEditViewModel : ViewModelBase
                     var carryBalance = payee.IsAccount;
                     var nextBill = bill.CreateNextRecurrence(carryBalance);
                     await _billRepository.InsertAsync(nextBill);
+
+                    // Update the payee account balance to match the new bill's balance
+                    if (carryBalance)
+                    {
+                        payee.Balance = nextBill.Balance;
+                        await _payeeRepository.UpdateAsync(payee);
+                    }
                 }
             }
 

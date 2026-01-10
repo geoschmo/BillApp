@@ -5,16 +5,18 @@ namespace BillApp.Views.Dialogs;
 
 public partial class PayBillDialog : Window
 {
+    public decimal Balance { get; private set; }
     public decimal PaidAmount { get; private set; }
     public DateTime PaidDate { get; private set; }
     public PaymentMethodItem? SelectedPaymentMethod { get; private set; }
     public string? Confirmation { get; private set; }
 
-    public PayBillDialog(string payee, decimal amountDue, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods, PaymentMethodItem? defaultPaymentMethod = null)
+    public PayBillDialog(string payee, decimal amountDue, decimal balance, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods, PaymentMethodItem? defaultPaymentMethod = null)
     {
         InitializeComponent();
 
         BillInfoText.Text = payee;
+        BalanceBox.Text = balance.ToString("F2");
         PaidAmountBox.Text = amountDue.ToString("F2");
         PaidDatePicker.SelectedDate = DateTime.Today;
 
@@ -41,6 +43,14 @@ public partial class PayBillDialog : Window
 
     private void PayButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!decimal.TryParse(BalanceBox.Text, out var balance) || balance < 0)
+        {
+            MessageBox.Show("Please enter a valid balance.", "Invalid Balance",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            BalanceBox.Focus();
+            return;
+        }
+
         if (!decimal.TryParse(PaidAmountBox.Text, out var amount) || amount < 0)
         {
             MessageBox.Show("Please enter a valid amount.", "Invalid Amount",
@@ -56,6 +66,7 @@ public partial class PayBillDialog : Window
             return;
         }
 
+        Balance = balance;
         PaidAmount = amount;
         PaidDate = PaidDatePicker.SelectedDate.Value;
         SelectedPaymentMethod = PayMethodCombo.SelectedItem as PaymentMethodItem;

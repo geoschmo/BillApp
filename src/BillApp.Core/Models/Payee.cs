@@ -95,6 +95,11 @@ public class Payee : EntityBase
     /// </summary>
     public Category? Category { get; set; }
 
+    /// <summary>
+    /// Last date a bill was paid for this payee - not stored in DB, set by ViewModel
+    /// </summary>
+    public DateTime? LastPaidDate { get; set; }
+
     // ===== Computed Properties =====
 
     /// <summary>

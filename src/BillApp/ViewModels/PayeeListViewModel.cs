@@ -77,12 +77,24 @@ public partial class PayeeListViewModel : ViewModelBase
             // Load payees with categories
             var payees = (await _payeeRepository.GetAllAsync()).ToList();
 
-            // Set category navigation property
+            // Load last paid dates for each payee
+            var allBills = await _billRepository.GetAllAsync();
+            var lastPaidDates = allBills
+                .Where(b => b.PaidDate.HasValue)
+                .GroupBy(b => b.PayeeId)
+                .ToDictionary(g => g.Key, g => g.Max(b => b.PaidDate));
+
+            // Set category and last paid date navigation properties
             foreach (var payee in payees)
             {
                 if (payee.CategoryId.HasValue && categoryLookup.TryGetValue(payee.CategoryId.Value, out var category))
                 {
                     payee.Category = category;
+                }
+
+                if (lastPaidDates.TryGetValue(payee.Id, out var lastPaidDate))
+                {
+                    payee.LastPaidDate = lastPaidDate;
                 }
             }
 
