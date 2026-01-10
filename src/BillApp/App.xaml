@@ -27,6 +27,7 @@
             <converters:PaymentStatusToVisibilityConverter x:Key="PaidVisibilityConverter"/>
             <converters:PaidStatusToVisibilityConverter x:Key="ShowForPaidConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
 
             <!--
             DataTemplates map ViewModels to Views
