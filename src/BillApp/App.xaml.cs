@@ -73,6 +73,7 @@ public partial class App : Application
         services.AddTransient<BudgetViewModel>();
         services.AddTransient<SecureNotesViewModel>();
         services.AddTransient<ReportsViewModel>();
+        services.AddTransient<AccountSummaryReportViewModel>();
         services.AddTransient<SettingsViewModel>();
 
         // Register MainWindow

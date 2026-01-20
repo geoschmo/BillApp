@@ -1,0 +1,327 @@
+<UserControl x:Class="BillApp.Views.Reports.AccountSummaryReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:BillApp.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:AccountSummaryReportViewModel}"
+             d:DesignHeight="800" d:DesignWidth="600">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header with Back Button -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"
+                    Content="Back"
+                    Command="{Binding BackCommand}"
+                    Padding="15,8"
+                    Margin="0,0,15,0"/>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Title}"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- Report Selection Controls -->
+        <Border Grid.Row="1"
+                Background="#F5F5F5"
+                Padding="15"
+                CornerRadius="4"
+                Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Account:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding Accounts}"
+                          SelectedItem="{Binding SelectedAccount}"
+                          DisplayMemberPath="Name"
+                          Padding="8,6"
+                          MinWidth="200"/>
+
+                <TextBlock Grid.Column="2"
+                           Text="Bill History:"
+                           VerticalAlignment="Center"
+                           Margin="20,0,10,0"/>
+                <ComboBox Grid.Column="3"
+                          ItemsSource="{Binding BillHistoryOptions}"
+                          SelectedItem="{Binding BillHistoryCount}"
+                          Padding="8,6"
+                          Width="70"/>
+
+                <Button Grid.Column="4"
+                        Content="Generate Report"
+                        Command="{Binding GenerateReportCommand}"
+                        Padding="15,8"
+                        Margin="20,0,0,0"
+                        Background="#1976D2"
+                        Foreground="White"/>
+
+                <Button Grid.Column="5"
+                        Content="Print"
+                        Command="{Binding PrintCommand}"
+                        CommandParameter="{Binding ElementName=PrintableArea}"
+                        Padding="15,8"
+                        Margin="10,0,0,0"
+                        Visibility="{Binding ShowReport, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Report Content (Scrollable) -->
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Auto">
+
+            <!-- Printable Area - A5 size (148mm x 210mm = ~560 x 794 pixels at 96dpi) -->
+            <Border x:Name="PrintableArea"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    Padding="15,15,15,15"
+                    Width="560"
+                    Height="794"
+                    HorizontalAlignment="Left"
+                    Visibility="{Binding ShowReport, Converter={StaticResource BoolToVisibilityConverter}}">
+                <!-- Outer border with left gutter for hole punches (~20mm = 75px) -->
+                <Border Padding="60,0,0,0">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0">
+                        <!-- Report Title -->
+                        <TextBlock Text="Account Summary"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,2"/>
+                        <TextBlock Text="{Binding AccountName}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8"/>
+
+                        <!-- Account Information Section - Two Columns -->
+                        <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,0,0,6" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="15"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Left Column -->
+                                <Grid Grid.Column="0" Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="85"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Category:" FontSize="9" Foreground="#666" Margin="0,0,0,2"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Category, TargetNullValue='-'}" FontSize="9" Margin="0,0,0,2"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Account Type:" FontSize="9" Foreground="#666" Margin="0,0,0,2"
+                                               Visibility="{Binding AccountType, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AccountType}" FontSize="9" Margin="0,0,0,2"
+                                               Visibility="{Binding AccountType, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Institution:" FontSize="9" Foreground="#666" Margin="0,0,0,2"
+                                               Visibility="{Binding Institution, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Institution}" FontSize="9" Margin="0,0,0,2"
+                                               Visibility="{Binding Institution, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Account #:" FontSize="9" Foreground="#666" Margin="0,0,0,2"
+                                               Visibility="{Binding AccountNumber, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AccountNumber}" FontSize="9" Margin="0,0,0,2"
+                                               Visibility="{Binding AccountNumber, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Balance:" FontSize="9" Foreground="#666" Margin="0,0,0,2"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Balance, StringFormat='{}{0:C}'}" FontSize="9" FontWeight="SemiBold" Margin="0,0,0,2"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Credit Limit:" FontSize="9" Foreground="#666" Margin="0,0,0,2"
+                                               Visibility="{Binding CreditLimit, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CreditLimit, StringFormat='{}{0:C}'}" FontSize="9" Margin="0,0,0,2"
+                                               Visibility="{Binding CreditLimit, Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Interest Rate:" FontSize="9" Foreground="#666" Margin="0,0,0,2"
+                                               Visibility="{Binding InterestRate, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding InterestRate, StringFormat='{}{0:N2}%'}" FontSize="9" Margin="0,0,0,2"
+                                               Visibility="{Binding InterestRate, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                </Grid>
+
+                                <!-- Right Column -->
+                                <Grid Grid.Column="2" Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="65"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Payment URL:" FontSize="9" Foreground="#666" Margin="0,0,0,2"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PaymentUrl, TargetNullValue='-'}" FontSize="9" TextWrapping="Wrap" Margin="0,0,0,2"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Username:" FontSize="9" Foreground="#666" Margin="0,0,0,2"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Username, TargetNullValue='-'}" FontSize="9" Margin="0,0,0,2"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Password:" FontSize="9" Foreground="#666" Margin="0,0,0,2"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Password, TargetNullValue='-'}" FontSize="9" Margin="0,0,0,2"/>
+                                </Grid>
+
+                                <!-- Notes - spans both columns -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0"
+                                            Visibility="{Binding Notes, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <TextBlock Text="Notes:" FontSize="9" Foreground="#666" Margin="0,0,0,1"/>
+                                    <TextBlock Text="{Binding Notes}"
+                                               FontSize="9"
+                                               TextWrapping="Wrap"
+                                               Background="#FAFAFA"
+                                               Padding="4"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Bill History Header -->
+                        <TextBlock FontSize="10" FontWeight="Bold" Margin="0,0,0,4">
+                            <Run Text="Bill History ("/>
+                            <Run Text="{Binding Bills.Count, Mode=OneWay}"/>
+                            <Run Text=" records)"/>
+                        </TextBlock>
+
+                        <!-- Bills Table Header -->
+                        <Border Background="#E3F2FD" Padding="4,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="58"/>
+                                    <ColumnDefinition Width="58"/>
+                                    <ColumnDefinition Width="55"/>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Due Date" FontSize="8" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="Paid Date" FontSize="8" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="Balance" FontSize="8" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="Due" FontSize="8" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="4" Text="Paid" FontSize="8" FontWeight="SemiBold" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="5" Text="Payment Method" FontSize="8" FontWeight="SemiBold" Margin="15,0,0,0"/>
+                                <TextBlock Grid.Column="6" Text="Status" FontSize="8" FontWeight="SemiBold" Margin="10,0,0,0"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Bill History Content (fills remaining space) -->
+                    <StackPanel Grid.Row="1">
+                        <!-- Bills Table Rows -->
+                        <ItemsControl ItemsSource="{Binding Bills}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#CCC" BorderThickness="0,0,0,1" Padding="4,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="58"/>
+                                                <ColumnDefinition Width="58"/>
+                                                <ColumnDefinition Width="55"/>
+                                                <ColumnDefinition Width="50"/>
+                                                <ColumnDefinition Width="50"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding DueDate, StringFormat='{}{0:MM/dd/yy}'}" FontSize="8"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding PaidDateDisplay}" FontSize="8"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding BalanceDisplay}" FontSize="8" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding AmountDueDisplay}" FontSize="8" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding AmountPaidDisplay}" FontSize="8" TextAlignment="Right"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding PaymentMethod}" FontSize="8" Margin="15,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="6" Text="{Binding PaidStatusDisplay}" FontSize="8" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Blank lines for writing -->
+                        <ItemsControl ItemsSource="{Binding BlankLines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#CCC" BorderThickness="0,0,0,1" Height="16"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- No bills message -->
+                        <TextBlock Text="No bills found for this account."
+                                   FontSize="9"
+                                   Foreground="Gray"
+                                   FontStyle="Italic"
+                                   Margin="0,8,0,0"
+                                   Visibility="{Binding Bills.Count, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="2"
+                               Text="{Binding Source={x:Static System:DateTime.Now}, StringFormat='Report generated: {0:MMMM d, yyyy}'}"
+                               xmlns:System="clr-namespace:System;assembly=mscorlib"
+                               FontSize="8"
+                               Foreground="Gray"
+                               HorizontalAlignment="Center"
+                               Margin="0,10,0,0"/>
+                </Grid>
+                </Border>
+            </Border>
+        </ScrollViewer>
+
+        <!-- Loading Indicator -->
+        <Border Grid.RowSpan="3"
+                Background="#88FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Loading..."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="18"/>
+        </Border>
+    </Grid>
+</UserControl>

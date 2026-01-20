@@ -66,6 +66,10 @@
                 <reportViews:ReportsView/>
             </DataTemplate>
 
+            <DataTemplate DataType="{x:Type vm:AccountSummaryReportViewModel}">
+                <reportViews:AccountSummaryReportView/>
+            </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <settingViews:SettingsView/>
             </DataTemplate>
