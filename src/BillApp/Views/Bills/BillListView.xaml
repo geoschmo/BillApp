@@ -18,14 +18,24 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,15">
             <TextBlock Text="Bills" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
-            <Button Content="+ Add Bill"
-                    Command="{Binding AddBillCommand}"
-                    HorizontalAlignment="Right"
-                    Padding="15,8"
-                    Background="#0078D4"
-                    Foreground="White"
-                    BorderThickness="0"
-                    Cursor="Hand"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Quick Add..."
+                        Command="{Binding QuickAddBillsCommand}"
+                        Padding="15,8"
+                        Margin="0,0,10,0"
+                        Background="#FF9800"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        ToolTip="Quickly add multiple bills from pasted text"/>
+                <Button Content="+ Add Bill"
+                        Command="{Binding AddBillCommand}"
+                        Padding="15,8"
+                        Background="#0078D4"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"/>
+            </StackPanel>
         </DockPanel>
 
         <!-- Filters -->

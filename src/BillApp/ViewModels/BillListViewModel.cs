@@ -7,6 +7,7 @@ using BillApp.Services;
 using BillApp.Views.Dialogs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BillApp.ViewModels;
 
@@ -153,6 +154,21 @@ public partial class BillListViewModel : ViewModelBase
     private async Task AddBillAsync()
     {
         await _navigationService.NavigateToAsync<BillEditViewModel>();
+    }
+
+    [RelayCommand]
+    private async Task QuickAddBillsAsync()
+    {
+        var payeeRepo = App.Services.GetRequiredService<IPayeeRepository>();
+        var billRepo = App.Services.GetRequiredService<IBillRepository>();
+
+        var dialog = new QuickAddDialog(payeeRepo, billRepo);
+        dialog.Owner = Application.Current.MainWindow;
+
+        if (dialog.ShowDialog() == true)
+        {
+            await LoadBillsAsync();
+        }
     }
 
     [RelayCommand]

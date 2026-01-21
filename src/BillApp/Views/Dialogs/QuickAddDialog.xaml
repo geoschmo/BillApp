@@ -1,0 +1,180 @@
+<Window x:Class="BillApp.Views.Dialogs.QuickAddDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Quick Add Bills"
+        Width="700"
+        Height="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        MinWidth="600"
+        MinHeight="500"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <!-- Loading Overlay -->
+        <Border x:Name="LoadingOverlay"
+                Background="#CC000000"
+                Visibility="Collapsed"
+                Panel.ZIndex="100">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="200"
+                             Height="20"
+                             Margin="0,0,0,15"/>
+                <TextBlock x:Name="LoadingText"
+                           Text="Adding bills..."
+                           Foreground="White"
+                           FontSize="16"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Please wait, this may take a moment."
+                           Foreground="#CCCCCC"
+                           FontSize="12"
+                           HorizontalAlignment="Center"
+                           Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Selection Row -->
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Payee Selection -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Payee:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="PayeeComboBox"
+                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id"
+                              Padding="8,6"
+                              SelectionChanged="PayeeComboBox_SelectionChanged"/>
+                </StackPanel>
+
+                <!-- Day of Month -->
+                <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                    <TextBlock Text="Due Day:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="DayOfMonthComboBox"
+                              Padding="8,6"
+                              SelectedIndex="0"/>
+                </StackPanel>
+
+                <!-- Payment Method -->
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Payment Method:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="PaymentMethodComboBox"
+                              DisplayMemberPath="Name"
+                              Padding="8,6"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Paste Area Label -->
+            <TextBlock Grid.Row="1" Text="Paste tab-separated text (date and amount will be auto-detected):" Style="{StaticResource LabelStyle}"/>
+
+            <!-- Paste TextBox -->
+            <TextBox x:Name="PasteTextBox"
+                     Grid.Row="2"
+                     Height="120"
+                     AcceptsReturn="True"
+                     AcceptsTab="True"
+                     TextWrapping="NoWrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     Padding="8"
+                     TextChanged="PasteTextBox_TextChanged"/>
+
+            <!-- Preview Results -->
+            <Grid Grid.Row="3" Margin="0,15,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Preview:" Style="{StaticResource LabelStyle}"/>
+                <Border Grid.Row="1" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4">
+                    <ListBox x:Name="PreviewList"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="5,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding RowNumber}" Foreground="Gray" FontSize="11"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PaidDateDisplay}" FontSize="11"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding DueDateDisplay}" FontSize="11" Foreground="#666"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding AmountDisplay}" FontSize="11" HorizontalAlignment="Right"/>
+                                    <TextBlock Grid.Column="4" FontWeight="SemiBold" FontSize="11" Margin="10,0,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding Status}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsValid}" Value="True">
+                                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                                        <Setter Property="Foreground" Value="#F44336"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Grid>
+
+            <!-- Summary -->
+            <Border Grid.Row="4" Background="#F5F5F5" Padding="10" Margin="0,15,0,0" CornerRadius="4">
+                <TextBlock x:Name="SummaryText" TextWrapping="Wrap" Text="Select a payee and paste data to preview."/>
+            </Border>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button x:Name="AddBillsButton"
+                        Content="Add Bills"
+                        Width="100"
+                        Padding="8,6"
+                        Margin="0,0,10,0"
+                        IsEnabled="False"
+                        Background="#4CAF50"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="AddBillsButton_Click"/>
+                <Button Content="Cancel"
+                        Width="100"
+                        Padding="8,6"
+                        IsCancel="True"
+                        Click="CancelButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
