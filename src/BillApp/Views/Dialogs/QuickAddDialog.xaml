@@ -55,6 +55,7 @@
             <Grid Grid.Row="0" Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="90"/>
                     <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -77,8 +78,16 @@
                               SelectedIndex="0"/>
                 </StackPanel>
 
+                <!-- Frequency -->
+                <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                    <TextBlock Text="Frequency:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="FrequencyComboBox"
+                              Padding="8,6"
+                              SelectedIndex="0"/>
+                </StackPanel>
+
                 <!-- Payment Method -->
-                <StackPanel Grid.Column="2">
+                <StackPanel Grid.Column="3">
                     <TextBlock Text="Payment Method:" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="PaymentMethodComboBox"
                               DisplayMemberPath="Name"

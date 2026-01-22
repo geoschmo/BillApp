@@ -30,6 +30,10 @@ public partial class QuickAddDialog : Window
         }
         DayOfMonthComboBox.SelectedIndex = 0;
 
+        // Populate frequency dropdown
+        FrequencyComboBox.ItemsSource = Enum.GetValues<RecurrenceFrequency>();
+        FrequencyComboBox.SelectedIndex = 0; // None by default
+
         Loaded += async (_, _) => await LoadDataAsync();
     }
 
@@ -262,6 +266,7 @@ public partial class QuickAddDialog : Window
         if (!validRows.Any()) return;
 
         var selectedPaymentMethod = PaymentMethodComboBox.SelectedItem as PaymentMethodItem;
+        var selectedFrequency = (RecurrenceFrequency)(FrequencyComboBox.SelectedItem ?? RecurrenceFrequency.None);
 
         AddBillsButton.IsEnabled = false;
         LoadingText.Text = "Adding bills...";
@@ -283,7 +288,7 @@ public partial class QuickAddDialog : Window
                     DueDate = row.DueDate,
                     PaidDate = row.PaidDate,
                     Status = PaymentStatus.Paid,
-                    Frequency = RecurrenceFrequency.None,
+                    Frequency = selectedFrequency,
                     IsCashPayment = selectedPaymentMethod?.IsCash ?? false,
                     PaymentAccountId = selectedPaymentMethod?.AccountId
                 };
