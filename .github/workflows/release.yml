@@ -104,12 +104,13 @@ jobs:
       # --------------------------------------------------------
       # Publish the WPF application using FolderProfile.pubxml
       # Profile settings: self-contained, single-file, ReadyToRun, win-x64
+      # Note: --output overrides the profile's local PublishDir path
       # --------------------------------------------------------
       - name: Publish application
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} `
             -p:PublishProfile=${{ env.PUBLISH_PROFILE }} `
-            -p:PublishDir=${{ env.PUBLISH_DIR }}
+            --output ${{ env.PUBLISH_DIR }}
 
       # --------------------------------------------------------
       # Create zip archive of published output
