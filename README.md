@@ -1,10 +1,16 @@
 # BillApp
 
-A Windows desktop application for personal finance management, built with WPF and .NET. Designed to replace spreadsheet-based bill tracking with a secure, user-friendly local application.
+A Windows desktop application for personal finance management, built with WPF and .NET 10. Designed to replace spreadsheet-based bill tracking with a secure, user-friendly local application.
 
 ## Features
 
 ### Current (Implemented)
+
+**Dashboard**
+- At-a-glance overview of your financial status
+- Upcoming bills widget showing bills due soon
+- Recent bills widget showing recently paid bills
+- Quick add bill feature for fast entry with payee, amount, due date, and frequency
 
 **Bill Management**
 - Create, edit, and delete bills with two-column form layout
@@ -33,7 +39,7 @@ A Windows desktop application for personal finance management, built with WPF an
 - Credit card specific fields: credit limit, interest rate (APR)
 - Online access credentials (encrypted): login URL, username, password
 - Designate accounts as payment methods (appear in pay method dropdown)
-- Summary dashboard showing total assets, liabilities, and net worth
+- Account summary report showing total assets, liabilities, and net worth
 - Account balance syncs with linked bill balance
 - Filter accounts by type and search by name
 - Mark accounts as active/closed
@@ -80,16 +86,17 @@ A Windows desktop application for personal finance management, built with WPF an
 | 5 | Budget | Budget creation, spending categories, progress tracking |
 | 6 | Recurring Service | Background service for auto-creating upcoming recurring bills |
 | 7 | Secure Notes | Encrypted storage for passwords, PINs, and sensitive notes |
-| 8 | Dashboard & Reports | Financial overview, charts, spending analysis |
+| 8 | Reports & Charts | Spending analysis, payment history, trend visualization |
 | 9 | Notifications | Due date reminders and alerts |
 
 ## Technology Stack
 
-- **UI Framework:** WPF (.NET 8/10)
+- **UI Framework:** WPF (.NET 10)
 - **Architecture:** MVVM with CommunityToolkit.Mvvm
 - **Database:** LiteDB (embedded NoSQL)
 - **Encryption:** AES-256 + Windows DPAPI
 - **Dependency Injection:** Microsoft.Extensions.DependencyInjection
+- **CI/CD:** GitHub Actions (automated releases)
 
 ## Project Structure
 
@@ -118,10 +125,14 @@ BillApp/
 ### Prerequisites
 
 - Windows 10/11
-- .NET 8 SDK or later
+- .NET 10 SDK (for building from source)
 - Visual Studio 2022 (recommended) or VS Code
 
-### Build & Run
+### Download
+
+Pre-built releases are available on the [Releases](../../releases) page. Download the latest `BillApp_vX.X.X_win-x64.zip`, extract, and run `BillApp.exe`. The release is self-contained and does not require .NET to be installed.
+
+### Build from Source
 
 ```bash
 # Clone the repository
@@ -148,6 +159,15 @@ Or open `BillApp.sln` in Visual Studio and press F5.
 - **Backups:** `%USERPROFILE%\Documents\BillApp Backups\` (default, configurable)
 
 > **Note:** The database encryption key is protected by your Windows user account. If you reinstall Windows or move to a new PC, use the Backup & Restore feature to migrate your data. Backups are encrypted with a password you choose and can be restored on any machine.
+
+## Releases
+
+Releases are automated via GitHub Actions. A new release can be created by:
+
+1. **Tag push:** `git tag v1.9.0 && git push origin v1.9.0`
+2. **Manual:** Go to Actions > Release > Run workflow
+
+Each release includes a self-contained Windows x64 executable (no .NET runtime required).
 
 ## Architecture Notes
 

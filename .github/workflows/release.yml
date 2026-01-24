@@ -37,18 +37,18 @@ env:
   SOLUTION_PATH: BillApp.sln
   PROJECT_PATH: src/BillApp/BillApp.csproj
 
-  # Publish profile name (located in Properties/PublishProfiles/)
-  # Profile settings: self-contained, single-file, ReadyToRun, win-x64
-  PUBLISH_PROFILE: FolderProfile
+  # Build configuration
+  BUILD_CONFIG: Release
 
-  # Output directory for published files (overrides profile's local path)
+  # Runtime identifier - change to target different platforms
+  # Common values: win-x64, win-x86, win-arm64
+  RUNTIME: win-x64
+
+  # Output directory for published files
   PUBLISH_DIR: ./publish
 
   # App name used in artifact naming
   APP_NAME: BillApp
-
-  # Runtime identifier (must match publish profile for artifact naming)
-  RUNTIME: win-x64
 
 jobs:
   build-and-release:
@@ -102,15 +102,19 @@ jobs:
         run: dotnet restore ${{ env.SOLUTION_PATH }}
 
       # --------------------------------------------------------
-      # Publish the WPF application using FolderProfile.pubxml
-      # Profile settings: self-contained, single-file, ReadyToRun, win-x64
-      # Note: --output overrides the profile's local PublishDir path
+      # Publish the WPF application
+      # Self-contained single-file executable with ReadyToRun
       # --------------------------------------------------------
       - name: Publish application
         run: |
           dotnet publish ${{ env.PROJECT_PATH }} `
-            -p:PublishProfile=${{ env.PUBLISH_PROFILE }} `
-            --output ${{ env.PUBLISH_DIR }}
+            --configuration ${{ env.BUILD_CONFIG }} `
+            --runtime ${{ env.RUNTIME }} `
+            --output ${{ env.PUBLISH_DIR }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishReadyToRun=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true
 
       # --------------------------------------------------------
       # Create zip archive of published output
