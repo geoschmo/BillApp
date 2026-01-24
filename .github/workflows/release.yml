@@ -1,0 +1,144 @@
+# GitHub Actions workflow for creating releases of BillApp
+# Supports both manual dispatch and tag-triggered releases
+#
+# Usage:
+#   - Manual: Actions tab → "Release" → "Run workflow" → optionally provide version/notes
+#   - Tag push: git tag v1.2.3 && git push origin v1.2.3
+
+name: Release
+
+on:
+  # Tag-triggered release (e.g., v1.2.3)
+  push:
+    tags:
+      - 'v*'
+
+  # Manual workflow dispatch
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.2.3). Leave empty for auto-generated timestamp.'
+        required: false
+        type: string
+      notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+
+# Required for creating releases and uploading assets
+permissions:
+  contents: write
+
+# ============================================================
+# Configuration - Easy to modify
+# ============================================================
+env:
+  # Project/Solution paths
+  SOLUTION_PATH: BillApp.sln
+  PROJECT_PATH: src/BillApp/BillApp.csproj
+
+  # Publish profile name (located in Properties/PublishProfiles/)
+  # Profile settings: self-contained, single-file, ReadyToRun, win-x64
+  PUBLISH_PROFILE: FolderProfile
+
+  # Output directory for published files (overrides profile's local path)
+  PUBLISH_DIR: ./publish
+
+  # App name used in artifact naming
+  APP_NAME: BillApp
+
+  # Runtime identifier (must match publish profile for artifact naming)
+  RUNTIME: win-x64
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      # --------------------------------------------------------
+      # Determine version/tag to use
+      # --------------------------------------------------------
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          # Priority: 1) Tag push, 2) Manual input, 3) Auto-generate
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $version = '${{ github.ref_name }}'
+            Write-Host "Using tag from push: $version"
+          }
+          elseif ('${{ inputs.version }}' -ne '') {
+            $version = '${{ inputs.version }}'
+            Write-Host "Using manual input version: $version"
+          }
+          else {
+            # Auto-generate timestamp-based version: vYYYY.MM.DD.HHmm
+            $version = "v$(Get-Date -Format 'yyyy.MM.dd.HHmm')"
+            Write-Host "Auto-generated version: $version"
+          }
+
+          # Output for use in subsequent steps
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+
+      # --------------------------------------------------------
+      # Checkout repository
+      # --------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------------
+      # Setup .NET SDK
+      # --------------------------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # --------------------------------------------------------
+      # Restore NuGet packages
+      # --------------------------------------------------------
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      # --------------------------------------------------------
+      # Publish the WPF application using FolderProfile.pubxml
+      # Profile settings: self-contained, single-file, ReadyToRun, win-x64
+      # --------------------------------------------------------
+      - name: Publish application
+        run: |
+          dotnet publish ${{ env.PROJECT_PATH }} `
+            -p:PublishProfile=${{ env.PUBLISH_PROFILE }} `
+            -p:PublishDir=${{ env.PUBLISH_DIR }}
+
+      # --------------------------------------------------------
+      # Create zip archive of published output
+      # --------------------------------------------------------
+      - name: Create release archive
+        id: archive
+        shell: pwsh
+        run: |
+          $zipName = "${{ env.APP_NAME }}_${{ steps.version.outputs.VERSION }}_${{ env.RUNTIME }}.zip"
+          Compress-Archive -Path "${{ env.PUBLISH_DIR }}/*" -DestinationPath $zipName -Force
+          Write-Host "Created archive: $zipName"
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_OUTPUT
+
+      # --------------------------------------------------------
+      # Create GitHub Release and upload artifact
+      # --------------------------------------------------------
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: ${{ env.APP_NAME }} ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## ${{ env.APP_NAME }} ${{ steps.version.outputs.VERSION }}
+
+            ${{ inputs.notes || 'Release created automatically.' }}
+
+            ### Assets
+            - `${{ steps.archive.outputs.ZIP_NAME }}` - Windows x64 build (self-contained, no .NET runtime required)
+          files: ${{ steps.archive.outputs.ZIP_NAME }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
