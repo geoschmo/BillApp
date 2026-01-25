@@ -72,6 +72,9 @@ public partial class PayeeEditViewModel : ViewModelBase
     private bool _isPaymentAccount;
 
     [ObservableProperty]
+    private bool _isAutopay;
+
+    [ObservableProperty]
     private string? _validationError;
 
     public PayeeEditViewModel(
@@ -124,6 +127,7 @@ public partial class PayeeEditViewModel : ViewModelBase
 
                     IsActive = payee.IsActive;
                     IsPaymentAccount = payee.IsPaymentAccount;
+                    IsAutopay = payee.IsAutopay;
                 }
             }
         }
@@ -181,6 +185,7 @@ public partial class PayeeEditViewModel : ViewModelBase
 
                     payee.IsActive = IsActive;
                     payee.IsPaymentAccount = IsPaymentAccount;
+                    payee.IsAutopay = IsAutopay;
 
                     await _payeeRepository.UpdateAsync(payee);
                 }
@@ -204,7 +209,8 @@ public partial class PayeeEditViewModel : ViewModelBase
                     Username = EncryptIfNotEmpty(Username),
                     Password = EncryptIfNotEmpty(Password),
                     IsActive = IsActive,
-                    IsPaymentAccount = IsPaymentAccount
+                    IsPaymentAccount = IsPaymentAccount,
+                    IsAutopay = IsAutopay
                 };
 
                 await _payeeRepository.InsertAsync(payee);

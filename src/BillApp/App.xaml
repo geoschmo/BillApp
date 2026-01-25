@@ -28,6 +28,8 @@
             <converters:PaidStatusToVisibilityConverter x:Key="ShowForPaidConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
+            <converters:NotesIndicatorVisibilityConverter x:Key="NotesIndicatorVisibilityConverter"/>
+            <converters:NotesTooltipConverter x:Key="NotesTooltipConverter"/>
 
             <!--
             DataTemplates map ViewModels to Views

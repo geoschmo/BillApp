@@ -32,6 +32,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Bill Info -->
@@ -41,48 +42,85 @@
                    FontWeight="SemiBold"
                    Margin="0,0,0,20"/>
 
+        <!-- Last Payment -->
+        <Border Grid.Row="1"
+                x:Name="LastPaymentPanel"
+                Background="#F5F5F5"
+                CornerRadius="4"
+                Padding="10"
+                Margin="0,0,0,15"
+                Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Last Payment" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Amount Due:" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LastAmountDueText" Margin="0,0,0,4"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Amount Paid:" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LastAmountPaidText" Margin="0,0,0,4"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Date Paid:" Margin="0,0,8,4"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LastDatePaidText" Margin="0,0,0,4"/>
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Method:" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="LastMethodText"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+
         <!-- Balance -->
-        <TextBlock Grid.Row="1"
+        <TextBlock Grid.Row="2"
                    Text="Balance:"
                    Style="{StaticResource LabelStyle}"/>
-        <TextBox Grid.Row="2"
+        <TextBox Grid.Row="3"
                  x:Name="BalanceBox"/>
 
         <!-- Paid Amount -->
-        <TextBlock Grid.Row="3"
+        <TextBlock Grid.Row="4"
                    Text="Paid Amount:"
                    Style="{StaticResource LabelStyle}"/>
-        <TextBox Grid.Row="4"
+        <TextBox Grid.Row="5"
                  x:Name="PaidAmountBox"/>
 
         <!-- Paid Date -->
-        <TextBlock Grid.Row="5"
+        <TextBlock Grid.Row="6"
                    Text="Paid Date:"
                    Style="{StaticResource LabelStyle}"/>
-        <DatePicker Grid.Row="6"
+        <DatePicker Grid.Row="7"
                     x:Name="PaidDatePicker"
                     Padding="8,6"
                     Margin="0,0,0,15"/>
 
         <!-- Pay Method -->
-        <TextBlock Grid.Row="7"
+        <TextBlock Grid.Row="8"
                    Text="Pay Method:"
                    Style="{StaticResource LabelStyle}"/>
-        <ComboBox Grid.Row="8"
+        <ComboBox Grid.Row="9"
                   x:Name="PayMethodCombo"
                   DisplayMemberPath="Name"
                   Padding="8,6"
                   Margin="0,0,0,15"/>
 
         <!-- Confirmation -->
-        <TextBlock Grid.Row="9"
+        <TextBlock Grid.Row="10"
                    Text="Confirmation #:"
                    Style="{StaticResource LabelStyle}"/>
-        <TextBox Grid.Row="10"
+        <TextBox Grid.Row="11"
                  x:Name="ConfirmationBox"/>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="11"
+        <StackPanel Grid.Row="12"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
             <Button Content="Pay"

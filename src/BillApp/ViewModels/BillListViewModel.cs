@@ -217,9 +217,43 @@ public partial class BillListViewModel : ViewModelBase
             defaultPaymentMethod = new PaymentMethodItem { AccountId = bill.PaymentAccountId.Value };
         }
 
+        // Fetch the most recent paid bill for this payee (excluding current)
+        var lastPaidBill = (await _billRepository.GetAllAsync())
+            .Where(b => b.PayeeId == bill.PayeeId && b.Status == PaymentStatus.Paid && b.Id != bill.Id)
+            .OrderByDescending(b => b.PaidDate ?? b.DueDate)
+            .FirstOrDefault();
+
+        string? lastPaidMethod = null;
+        if (lastPaidBill != null)
+        {
+            if (lastPaidBill.IsCashPayment)
+            {
+                lastPaidMethod = "Cash";
+            }
+            else if (lastPaidBill.PaymentAccountId.HasValue)
+            {
+                var lastPaidAccount = await _payeeRepository.GetByIdAsync(lastPaidBill.PaymentAccountId.Value);
+                lastPaidMethod = lastPaidAccount?.Name ?? "Account";
+            }
+            else
+            {
+                lastPaidMethod = "(None)";
+            }
+        }
+
         // Show pay dialog with default values
         var payeeName = bill.Payee?.Name ?? "Unknown";
-        var dialog = new PayBillDialog(payeeName, bill.AmountDue, bill.Balance, bill.DueDate, paymentMethods, defaultPaymentMethod);
+        var dialog = new PayBillDialog(
+            payeeName,
+            bill.AmountDue,
+            bill.Balance,
+            bill.DueDate,
+            paymentMethods,
+            defaultPaymentMethod,
+            lastPaidBill?.AmountDue,
+            lastPaidBill?.AmountPaid,
+            lastPaidBill?.PaidDate,
+            lastPaidMethod);
         dialog.Owner = Application.Current.MainWindow;
 
         if (dialog.ShowDialog() != true)

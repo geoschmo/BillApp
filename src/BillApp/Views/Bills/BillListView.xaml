@@ -109,7 +109,41 @@
 
             <DataGrid.Columns>
                 <!-- Payee -->
-                <DataGridTextColumn Header="Payee" Binding="{Binding Payee.Name}" Width="*" MinWidth="120"/>
+                <DataGridTemplateColumn Header="Payee" Width="*" MinWidth="120" SortMemberPath="Payee.Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Payee.Name}" VerticalAlignment="Center"/>
+                                <Border Margin="6,0,0,0"
+                                        Padding="2"
+                                        CornerRadius="2"
+                                        Background="#FFF3E0"
+                                        VerticalAlignment="Center">
+                                    <Border.Visibility>
+                                        <MultiBinding Converter="{StaticResource NotesIndicatorVisibilityConverter}">
+                                            <Binding Path="Notes"/>
+                                            <Binding Path="Payee.Notes"/>
+                                        </MultiBinding>
+                                    </Border.Visibility>
+                                    <Border.ToolTip>
+                                        <TextBlock TextWrapping="Wrap" Width="260">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource NotesTooltipConverter}">
+                                                    <Binding Path="Notes"/>
+                                                    <Binding Path="Payee.Notes"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Border.ToolTip>
+                                    <Image Source="/BillApp;component/Assets/note-icon.png"
+                                           Width="12"
+                                           Height="12"
+                                           Stretch="Uniform"/>
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Amount Due -->
                 <DataGridTextColumn Header="Due" Binding="{Binding AmountDue, StringFormat=C, UpdateSourceTrigger=PropertyChanged}" Width="80">
@@ -156,7 +190,26 @@
                 <DataGridTemplateColumn Header="Due Date" Width="100" SortMemberPath="DueDate">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DueDate, StringFormat=d}" Padding="5,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                                <TextBlock Text="{Binding DueDate, StringFormat=d}" VerticalAlignment="Center"/>
+                                <Border Margin="6,0,0,0"
+                                        Width="14"
+                                        Height="14"
+                                        CornerRadius="7"
+                                        Background="#E8F5E9"
+                                        BorderBrush="#66BB6A"
+                                        BorderThickness="1"
+                                        VerticalAlignment="Center"
+                                        ToolTip="Autopay"
+                                        Visibility="{Binding Payee.IsAutopay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="A"
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               Foreground="#2E7D32"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

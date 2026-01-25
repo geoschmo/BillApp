@@ -11,7 +11,17 @@ public partial class PayBillDialog : Window
     public PaymentMethodItem? SelectedPaymentMethod { get; private set; }
     public string? Confirmation { get; private set; }
 
-    public PayBillDialog(string payee, decimal amountDue, decimal balance, DateTime dueDate, IEnumerable<PaymentMethodItem> paymentMethods, PaymentMethodItem? defaultPaymentMethod = null)
+    public PayBillDialog(
+        string payee,
+        decimal amountDue,
+        decimal balance,
+        DateTime dueDate,
+        IEnumerable<PaymentMethodItem> paymentMethods,
+        PaymentMethodItem? defaultPaymentMethod = null,
+        decimal? lastAmountDue = null,
+        decimal? lastAmountPaid = null,
+        DateTime? lastPaidDate = null,
+        string? lastPaidMethod = null)
     {
         InitializeComponent();
 
@@ -35,6 +45,15 @@ public partial class PayBillDialog : Window
         else
         {
             PayMethodCombo.SelectedIndex = 0; // Default to (None)
+        }
+
+        if (lastAmountDue.HasValue || lastAmountPaid.HasValue || lastPaidDate.HasValue || !string.IsNullOrWhiteSpace(lastPaidMethod))
+        {
+            LastPaymentPanel.Visibility = Visibility.Visible;
+            LastAmountDueText.Text = lastAmountDue.HasValue ? lastAmountDue.Value.ToString("C") : "N/A";
+            LastAmountPaidText.Text = lastAmountPaid.HasValue ? lastAmountPaid.Value.ToString("C") : "N/A";
+            LastDatePaidText.Text = lastPaidDate.HasValue ? lastPaidDate.Value.ToString("d") : "N/A";
+            LastMethodText.Text = !string.IsNullOrWhiteSpace(lastPaidMethod) ? lastPaidMethod : "N/A";
         }
 
         PaidAmountBox.Focus();

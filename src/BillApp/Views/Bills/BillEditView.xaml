@@ -91,6 +91,10 @@
                                      AcceptsReturn="True"
                                      Height="60"
                                      VerticalScrollBarVisibility="Auto"/>
+
+                            <CheckBox Content="Autopay account"
+                                      IsChecked="{Binding PayeeIsAutopay}"
+                                      Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

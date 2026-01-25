@@ -88,6 +88,11 @@ public class Payee : EntityBase
     /// </summary>
     public bool IsPaymentAccount { get; set; }
 
+    /// <summary>
+    /// Whether this account is set up for autopay
+    /// </summary>
+    public bool IsAutopay { get; set; }
+
     // ===== Navigation Properties =====
 
     /// <summary>

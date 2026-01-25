@@ -93,6 +93,9 @@ public partial class BillEditViewModel : ViewModelBase
     [ObservableProperty]
     private string? _payeeNotes;
 
+    [ObservableProperty]
+    private bool _payeeIsAutopay;
+
     public BillEditViewModel(
         IBillRepository billRepository,
         ICategoryRepository categoryRepository,
@@ -153,6 +156,7 @@ public partial class BillEditViewModel : ViewModelBase
                         PayeePaymentUrl = SelectedPayee.PaymentUrl;
                         PayeeAccountNumber = SelectedPayee.AccountNumber;
                         PayeeNotes = SelectedPayee.Notes;
+                        PayeeIsAutopay = SelectedPayee.IsAutopay;
                     }
 
                     AmountDue = bill.AmountDue;
@@ -198,6 +202,7 @@ public partial class BillEditViewModel : ViewModelBase
             PayeePaymentUrl = value.PaymentUrl;
             PayeeAccountNumber = value.AccountNumber;
             PayeeNotes = value.Notes;
+            PayeeIsAutopay = value.IsAutopay;
             NewPayeeName = string.Empty; // Clear new payee name when selecting existing
         }
         OnPropertyChanged(nameof(IsPayeeFinancialAccount));
@@ -238,13 +243,15 @@ public partial class BillEditViewModel : ViewModelBase
                 bool payeeChanged = payee.CategoryId != PayeeCategoryId ||
                                    payee.PaymentUrl != PayeePaymentUrl ||
                                    payee.AccountNumber != PayeeAccountNumber ||
-                                   payee.Notes != PayeeNotes;
+                                   payee.Notes != PayeeNotes ||
+                                   payee.IsAutopay != PayeeIsAutopay;
                 if (payeeChanged)
                 {
                     payee.CategoryId = PayeeCategoryId;
                     payee.PaymentUrl = PayeePaymentUrl;
                     payee.AccountNumber = PayeeAccountNumber;
                     payee.Notes = PayeeNotes;
+                    payee.IsAutopay = PayeeIsAutopay;
                     await _payeeRepository.UpdateAsync(payee);
                 }
             }
@@ -257,7 +264,8 @@ public partial class BillEditViewModel : ViewModelBase
                     CategoryId = PayeeCategoryId,
                     PaymentUrl = PayeePaymentUrl,
                     AccountNumber = PayeeAccountNumber,
-                    Notes = PayeeNotes
+                    Notes = PayeeNotes,
+                    IsAutopay = PayeeIsAutopay
                 };
                 await _payeeRepository.InsertAsync(payee);
             }

@@ -110,6 +110,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <!-- Row 0: Account Type and Institution -->
@@ -149,8 +150,14 @@
                                   IsChecked="{Binding IsPaymentAccount}"
                                   Margin="0,5,0,10"/>
 
-                        <!-- Row 4: Info -->
-                        <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
+                        <!-- Row 4: Autopay -->
+                        <CheckBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4"
+                                  Content="Autopay account"
+                                  IsChecked="{Binding IsAutopay}"
+                                  Margin="0,0,0,10"/>
+
+                        <!-- Row 5: Info -->
+                        <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="4"
                                 Background="#E3F2FD"
                                 Padding="10"
                                 CornerRadius="4"
