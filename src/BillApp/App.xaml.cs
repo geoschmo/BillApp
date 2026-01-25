@@ -16,7 +16,7 @@ namespace BillApp;
 /// Application entry point with dependency injection setup.
 /// Similar to Angular's main.ts and AppModule for providers.
 /// </summary>
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private readonly IServiceProvider _serviceProvider;
 

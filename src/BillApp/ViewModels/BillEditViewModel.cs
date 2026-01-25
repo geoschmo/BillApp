@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Windows.Forms;
 using BillApp.Core.Enums;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
@@ -67,6 +69,9 @@ public partial class BillEditViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _confirmation;
+
+    [ObservableProperty]
+    private string? _colorCode;
 
     [ObservableProperty]
     private ObservableCollection<Category> _categories = new();
@@ -168,6 +173,7 @@ public partial class BillEditViewModel : ViewModelBase
                     Frequency = bill.Frequency;
                     Notes = bill.Notes;
                     Confirmation = bill.Confirmation;
+                    ColorCode = bill.ColorCode;
 
                     // Set selected payment method based on bill data
                     if (bill.IsCashPayment)
@@ -213,6 +219,33 @@ public partial class BillEditViewModel : ViewModelBase
     /// Used to show/hide balance field in the UI.
     /// </summary>
     public bool IsPayeeFinancialAccount => SelectedPayee?.IsAccount == true;
+
+    [RelayCommand]
+    private void PickColor()
+    {
+        using var dialog = new ColorDialog
+        {
+            FullOpen = true,
+            AnyColor = true
+        };
+
+        if (TryGetDrawingColor(ColorCode, out var existing))
+        {
+            dialog.Color = existing;
+        }
+
+        if (dialog.ShowDialog() == DialogResult.OK)
+        {
+            var color = dialog.Color;
+            ColorCode = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
+    }
+
+    [RelayCommand]
+    private void ClearColor()
+    {
+        ColorCode = null;
+    }
 
     [RelayCommand]
     private async Task SaveAsync()
@@ -276,6 +309,7 @@ public partial class BillEditViewModel : ViewModelBase
             // Determine payment method values from selection
             bool isCashPayment = SelectedPaymentMethod?.IsCash ?? false;
             Guid? paymentAccountId = SelectedPaymentMethod?.AccountId;
+            var normalizedColorCode = string.IsNullOrWhiteSpace(ColorCode) ? null : ColorCode.Trim();
 
             if (_editingBillId.HasValue)
             {
@@ -293,6 +327,7 @@ public partial class BillEditViewModel : ViewModelBase
                     bill.Frequency = Frequency;
                     bill.Notes = Notes;
                     bill.Confirmation = Confirmation;
+                    bill.ColorCode = normalizedColorCode;
                     bill.IsCashPayment = isCashPayment;
                     bill.PaymentAccountId = paymentAccountId;
 
@@ -339,6 +374,7 @@ public partial class BillEditViewModel : ViewModelBase
                     Frequency = Frequency,
                     Notes = Notes,
                     Confirmation = Confirmation,
+                    ColorCode = normalizedColorCode,
                     IsCashPayment = isCashPayment,
                     PaymentAccountId = paymentAccountId
                 };
@@ -389,4 +425,46 @@ public partial class BillEditViewModel : ViewModelBase
     // Options for dropdowns
     public IEnumerable<PaymentStatus> StatusOptions => Enum.GetValues<PaymentStatus>();
     public IEnumerable<RecurrenceFrequency> FrequencyOptions => Enum.GetValues<RecurrenceFrequency>();
+
+    private static bool TryGetDrawingColor(string? hexCode, out System.Drawing.Color color)
+    {
+        color = System.Drawing.Color.Empty;
+
+        if (string.IsNullOrWhiteSpace(hexCode))
+        {
+            return false;
+        }
+
+        var trimmed = hexCode.Trim();
+        if (trimmed.StartsWith('#'))
+        {
+            trimmed = trimmed[1..];
+        }
+
+        if (trimmed.Length != 6 && trimmed.Length != 8)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(trimmed, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value))
+        {
+            return false;
+        }
+
+        if (trimmed.Length == 6)
+        {
+            var r = (value >> 16) & 0xFF;
+            var g = (value >> 8) & 0xFF;
+            var b = value & 0xFF;
+            color = System.Drawing.Color.FromArgb(r, g, b);
+            return true;
+        }
+
+        var a = (value >> 24) & 0xFF;
+        var red = (value >> 16) & 0xFF;
+        var green = (value >> 8) & 0xFF;
+        var blue = value & 0xFF;
+        color = System.Drawing.Color.FromArgb(a, red, green, blue);
+        return true;
+    }
 }

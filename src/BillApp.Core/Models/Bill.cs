@@ -48,6 +48,11 @@ public class Bill : EntityBase
     public string? Notes { get; set; }
 
     /// <summary>
+    /// Optional color code used for UI highlighting (e.g. #RRGGBB)
+    /// </summary>
+    public string? ColorCode { get; set; }
+
+    /// <summary>
     /// If this is a recurring bill, the ID of the previous bill in the chain
     /// </summary>
     public Guid? PreviousBillId { get; set; }
@@ -108,6 +113,7 @@ public class Bill : EntityBase
             Status = PaymentStatus.Pending,
             Frequency = Frequency,
             Notes = Notes,
+            ColorCode = ColorCode,
             PreviousBillId = Id,
             // For regular payees, copy the payment method from the previous bill
             IsCashPayment = carryBalance ? false : IsCashPayment,

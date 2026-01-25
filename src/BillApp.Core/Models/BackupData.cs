@@ -27,6 +27,7 @@ public class BillBackupDto
     public DateTime? PaidDate { get; set; }
     public int Frequency { get; set; }
     public string? Notes { get; set; }
+    public string? ColorCode { get; set; }
     public Guid? PreviousBillId { get; set; }
     public string? Confirmation { get; set; }
     public Guid? PaymentAccountId { get; set; }

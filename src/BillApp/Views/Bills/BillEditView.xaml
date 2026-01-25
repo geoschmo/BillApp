@@ -209,6 +209,29 @@
                                  Padding="10"/>
                     </Grid>
 
+                    <!-- Row Highlight Color -->
+                    <TextBlock Text="Row Highlight Color" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <Button Content="Pick..."
+                                Command="{Binding PickColorCommand}"
+                                Padding="12,6"
+                                Margin="0,0,8,0"/>
+                        <Button Content="Clear"
+                                Command="{Binding ClearColorCommand}"
+                                Padding="12,6"
+                                Margin="0,0,8,0"/>
+                        <Border Width="28"
+                                Height="28"
+                                CornerRadius="4"
+                                Background="{Binding ColorCode, TargetNullValue=Transparent}"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding ColorCode, TargetNullValue=(none)}"
+                                   Foreground="Gray"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
                     <!-- Bill Notes -->
                     <TextBlock Text="Bill Notes" FontWeight="SemiBold" Margin="0,0,0,5"/>
                     <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"

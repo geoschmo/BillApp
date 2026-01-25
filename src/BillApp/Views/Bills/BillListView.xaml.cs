@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BillApp.Views.Bills;
 
-public partial class BillListView : UserControl
+public partial class BillListView : System.Windows.Controls.UserControl
 {
     private const string ViewName = "BillListView";
     private ISettingsService? _settingsService;

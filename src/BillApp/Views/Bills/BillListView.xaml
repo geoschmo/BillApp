@@ -318,17 +318,22 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
 
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
-                            <Setter Property="Background" Value="#FFF3E0"/>
-                        </DataTrigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#E3F2FD"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
+        <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow">
+                <Setter Property="Background" Value="{Binding ColorCode}"/>
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsOverdue}" Value="True"/>
+                            <Condition Binding="{Binding ColorCode}" Value="{x:Null}"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#FFF3E0"/>
+                    </MultiDataTrigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#E3F2FD"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
             </DataGrid.RowStyle>
         </DataGrid>
 

@@ -356,6 +356,7 @@ public partial class BillListViewModel : ViewModelBase
             Status = PaymentStatus.Pending,
             Frequency = bill.Frequency,
             Notes = bill.Notes,
+            ColorCode = bill.ColorCode,
             PreviousBillId = bill.Id
         };
 
