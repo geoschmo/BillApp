@@ -1,0 +1,282 @@
+<UserControl x:Class="BillApp.Views.Reports.PaidBillsByCategoryReportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:BillApp.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:PaidBillsByCategoryReportViewModel}"
+             d:DesignHeight="800" d:DesignWidth="700">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header with Back Button -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"
+                    Content="Back"
+                    Command="{Binding BackCommand}"
+                    Padding="15,8"
+                    Margin="0,0,15,0"/>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Title}"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- Report Selection Controls -->
+        <Border Grid.Row="1"
+                Background="#F5F5F5"
+                Padding="15"
+                CornerRadius="4"
+                Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Category:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding CategoryOptions}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          DisplayMemberPath="Name"
+                          Width="150"
+                          Padding="8,6"/>
+
+                <TextBlock Grid.Column="2"
+                           Text="From:"
+                           VerticalAlignment="Center"
+                           Margin="20,0,10,0"/>
+                <DatePicker Grid.Column="3"
+                            SelectedDate="{Binding StartDate}"
+                            Width="120"/>
+
+                <TextBlock Grid.Column="4"
+                           Text="To:"
+                           VerticalAlignment="Center"
+                           Margin="20,0,10,0"/>
+                <DatePicker Grid.Column="5"
+                            SelectedDate="{Binding EndDate}"
+                            Width="120"/>
+
+                <Button Grid.Column="7"
+                        Content="Generate Report"
+                        Command="{Binding GenerateReportCommand}"
+                        Padding="15,8"
+                        Margin="20,0,0,0"
+                        Background="#1976D2"
+                        Foreground="White"/>
+
+                <Button Grid.Column="8"
+                        Content="Print"
+                        Command="{Binding PrintCommand}"
+                        CommandParameter="{Binding ElementName=PrintableArea}"
+                        Padding="15,8"
+                        Margin="10,0,0,0"
+                        Visibility="{Binding ShowReport, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Report Content (Scrollable) -->
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Auto">
+
+            <!-- Printable Area -->
+            <Border x:Name="PrintableArea"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    Padding="20"
+                    MinWidth="650"
+                    HorizontalAlignment="Left"
+                    Visibility="{Binding ShowReport, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <StackPanel>
+                    <!-- Report Title -->
+                    <TextBlock Text="Paid Bills by Category"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,5"/>
+                    <TextBlock HorizontalAlignment="Center" Margin="0,0,0,3" FontSize="12">
+                        <Run Text="{Binding StartDate, StringFormat='{}{0:MMMM d, yyyy}'}"/>
+                        <Run Text=" - "/>
+                        <Run Text="{Binding EndDate, StringFormat='{}{0:MMMM d, yyyy}'}"/>
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
+                               Margin="0,0,0,15"
+                               FontSize="11"
+                               Foreground="#666"
+                               Visibility="{Binding SelectedCategory.Id, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Run Text="Category: "/>
+                        <Run Text="{Binding SelectedCategory.Name, Mode=OneWay}"/>
+                    </TextBlock>
+
+                    <!-- Summary -->
+                    <Border Background="#E3F2FD" Padding="10" CornerRadius="4" Margin="0,0,0,15">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="Total Bills: " FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding TotalBillCount}"/>
+                                <TextBlock Text=" | Categories: " FontWeight="SemiBold" Margin="15,0,0,0"/>
+                                <TextBlock Text="{Binding CategoryGroups.Count}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="Grand Total: " FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:C}'}" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Category Groups -->
+                    <ItemsControl ItemsSource="{Binding CategoryGroups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,15" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel>
+                                        <!-- Category Header -->
+                                        <Border Padding="10,8" CornerRadius="4,4,0,0">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{Binding CategoryColor}"/>
+                                            </Border.Background>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding CategoryName}"
+                                                               FontWeight="Bold"
+                                                               FontSize="13"
+                                                               Foreground="White"/>
+                                                    <TextBlock Foreground="White" Opacity="0.8" Margin="10,0,0,0">
+                                                        <Run Text="("/>
+                                                        <Run Text="{Binding BillCount, Mode=OneWay}"/>
+                                                        <Run Text=" bills)"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding CategoryTotalDisplay}"
+                                                           FontWeight="Bold"
+                                                           FontSize="13"
+                                                           Foreground="White"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Bills Table Header -->
+                                        <Border Background="#FAFAFA" Padding="10,6" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Payee" FontWeight="SemiBold" FontSize="10"/>
+                                                <TextBlock Grid.Column="1" Text="Paid Date" FontWeight="SemiBold" FontSize="10"/>
+                                                <TextBlock Grid.Column="2" Text="Amount" FontWeight="SemiBold" FontSize="10" TextAlignment="Right"/>
+                                                <TextBlock Grid.Column="3" Text="Notes" FontWeight="SemiBold" FontSize="10" Margin="15,0,0,0"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Bills - Single line per bill -->
+                                        <ItemsControl ItemsSource="{Binding Bills}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Padding="10,5" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="150"/>
+                                                                <ColumnDefinition Width="70"/>
+                                                                <ColumnDefinition Width="70"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding PayeeName}"
+                                                                       FontSize="10"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding PaidDateDisplay}"
+                                                                       FontSize="10"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="2"
+                                                                       Text="{Binding AmountPaidDisplay}"
+                                                                       FontSize="10"
+                                                                       TextAlignment="Right"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="3"
+                                                                       Text="{Binding CombinedNotes}"
+                                                                       FontSize="9"
+                                                                       Foreground="#666"
+                                                                       Margin="15,0,0,0"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       VerticalAlignment="Center"
+                                                                       ToolTip="{Binding CombinedNotes}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- No data message -->
+                    <TextBlock Text="No paid bills found for the selected date range."
+                               FontSize="12"
+                               Foreground="Gray"
+                               FontStyle="Italic"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,0"
+                               Visibility="{Binding TotalBillCount, Converter={StaticResource ZeroToVisibilityConverter}}"/>
+
+                    <!-- Footer -->
+                    <TextBlock Text="{Binding Source={x:Static System:DateTime.Now}, StringFormat='Report generated: {0:MMMM d, yyyy h:mm tt}'}"
+                               xmlns:System="clr-namespace:System;assembly=mscorlib"
+                               FontSize="9"
+                               Foreground="Gray"
+                               HorizontalAlignment="Center"
+                               Margin="0,20,0,0"/>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <!-- Loading Indicator -->
+        <Border Grid.RowSpan="3"
+                Background="#88FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Loading..."
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="18"/>
+        </Border>
+    </Grid>
+</UserControl>

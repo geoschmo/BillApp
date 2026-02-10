@@ -26,4 +26,10 @@ public partial class ReportsViewModel : ViewModelBase
     {
         await _navigationService.NavigateToAsync<AccountSummaryReportViewModel>();
     }
+
+    [RelayCommand]
+    private async Task OpenPaidBillsByCategoryReportAsync()
+    {
+        await _navigationService.NavigateToAsync<PaidBillsByCategoryReportViewModel>();
+    }
 }

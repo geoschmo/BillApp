@@ -74,6 +74,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<SecureNotesViewModel>();
         services.AddTransient<ReportsViewModel>();
         services.AddTransient<AccountSummaryReportViewModel>();
+        services.AddTransient<PaidBillsByCategoryReportViewModel>();
         services.AddTransient<SettingsViewModel>();
 
         // Register MainWindow
