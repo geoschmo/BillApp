@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
-using BillApp.Views.Investments;
+using BillApp.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -14,6 +13,7 @@ namespace BillApp.ViewModels;
 public partial class InvestmentsOverviewViewModel : ViewModelBase
 {
     private readonly IInvestmentRepository _investmentRepository;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private ObservableCollection<InvestmentSnapshot> _snapshots = new();
@@ -54,9 +54,12 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
     [ObservableProperty]
     private decimal? _newPercentOfAccount;
 
-    public InvestmentsOverviewViewModel(IInvestmentRepository investmentRepository)
+    public InvestmentsOverviewViewModel(
+        IInvestmentRepository investmentRepository,
+        INavigationService navigationService)
     {
         _investmentRepository = investmentRepository;
+        _navigationService = navigationService;
     }
 
     public override async Task OnNavigatedToAsync(object? parameter = null)
@@ -75,7 +78,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
             SelectedSnapshot = Snapshots.FirstOrDefault();
             StatusMessage = Snapshots.Any()
                 ? $"Loaded {Snapshots.Count} snapshot(s)."
-                : "No snapshots yet. Use Quick Import or Add Holding.";
+                : "No investment snapshots were found in the database.";
         }
         catch (Exception ex)
         {
@@ -92,13 +95,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
     [RelayCommand]
     public async Task QuickImportAsync()
     {
-        var dialog = new InvestmentsImportDialog
-        {
-            Owner = Application.Current.MainWindow
-        };
-
-        dialog.ShowDialog();
-        await LoadSnapshotsAsync();
+        await _navigationService.NavigateToAsync<InvestmentsViewModel>();
     }
 
     [RelayCommand]

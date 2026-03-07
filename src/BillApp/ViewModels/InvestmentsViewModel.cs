@@ -4,6 +4,7 @@ using System.Linq;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Interfaces.Services;
 using BillApp.Core.Models;
+using BillApp.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -14,6 +15,7 @@ public partial class InvestmentsViewModel : ViewModelBase
 {
     private readonly IInvestmentImportService _importService;
     private readonly IInvestmentRepository _investmentRepository;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private string _accountName = "Investments";
@@ -47,10 +49,12 @@ public partial class InvestmentsViewModel : ViewModelBase
 
     public InvestmentsViewModel(
         IInvestmentImportService importService,
-        IInvestmentRepository investmentRepository)
+        IInvestmentRepository investmentRepository,
+        INavigationService navigationService)
     {
         _importService = importService;
         _investmentRepository = investmentRepository;
+        _navigationService = navigationService;
     }
 
     [RelayCommand]
@@ -141,6 +145,7 @@ public partial class InvestmentsViewModel : ViewModelBase
             await _investmentRepository.InsertAsync(snapshot);
             StatusMessage = $"Saved {snapshot.Holdings.Count} holding(s).";
             ClearPreview();
+            await ReturnToOverviewAsync();
         }
         catch (Exception ex)
         {
@@ -177,5 +182,16 @@ public partial class InvestmentsViewModel : ViewModelBase
         TotalValue = 0m;
         RawText = string.Empty;
         SelectedCsvPath = null;
+    }
+
+    private async Task ReturnToOverviewAsync()
+    {
+        if (_navigationService.CanGoBack)
+        {
+            await _navigationService.GoBackAsync();
+            return;
+        }
+
+        await _navigationService.NavigateToAsync<InvestmentsOverviewViewModel>();
     }
 }
