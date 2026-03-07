@@ -55,6 +55,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<IBillRepository, BillRepository>();
         services.AddTransient<ICategoryRepository, CategoryRepository>();
         services.AddTransient<IPayeeRepository, PayeeRepository>();
+        services.AddTransient<IInvestmentRepository, InvestmentRepository>();
 
         // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();
@@ -62,6 +63,9 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IAutoBackupService, AutoBackupService>();
         services.AddSingleton<IImportService, CsvImportService>();
+        services.AddSingleton<IInvestmentImportService, InvestmentImportService>();
+
+        services.AddTransient<InvestmentsOverviewViewModel>();
 
         // ViewModels (transient = new instance each time)
         services.AddTransient<MainWindowViewModel>();
@@ -76,6 +80,8 @@ public partial class App : System.Windows.Application
         services.AddTransient<AccountSummaryReportViewModel>();
         services.AddTransient<PaidBillsByCategoryReportViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<InvestmentsViewModel>();
+        services.AddTransient<InvestmentsOverviewViewModel>();
 
         // Register MainWindow
         services.AddSingleton<MainWindow>();

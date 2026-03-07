@@ -79,6 +79,10 @@
                             Style="{StaticResource NavButtonStyle}"
                             Command="{Binding NavigateToPayeesCommand}"/>
 
+                    <Button Content="Investments"
+                            Style="{StaticResource NavButtonStyle}"
+                            Command="{Binding NavigateToInvestmentsCommand}"/>
+
                     <Button Content="Budget"
                             Style="{StaticResource NavButtonStyle}"
                             Command="{Binding NavigateToBudgetCommand}"/>

@@ -67,6 +67,12 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task NavigateToInvestments()
+    {
+        await _navigationService.NavigateToAsync<InvestmentsOverviewViewModel>();
+    }
+
+    [RelayCommand]
     private async Task NavigateToBudget()
     {
         await _navigationService.NavigateToAsync<BudgetViewModel>();

@@ -1,0 +1,12 @@
+<Window x:Class="BillApp.Views.Investments.InvestmentsImportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BillApp.Views.Investments"
+        Title="Import Investments"
+        Width="950"
+        Height="700"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+
+    <local:InvestmentsView/>
+</Window>

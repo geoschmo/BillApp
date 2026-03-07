@@ -10,6 +10,7 @@
              xmlns:secureViews="clr-namespace:BillApp.Views.SecureNotes"
              xmlns:reportViews="clr-namespace:BillApp.Views.Reports"
              xmlns:settingViews="clr-namespace:BillApp.Views.Settings"
+             xmlns:investmentViews="clr-namespace:BillApp.Views.Investments"
              xmlns:converters="clr-namespace:BillApp.Converters"
              ShutdownMode="OnExplicitShutdown">
     <!--
@@ -78,6 +79,10 @@
 
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <settingViews:SettingsView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:InvestmentsOverviewViewModel}">
+                <investmentViews:InvestmentsOverviewView/>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
