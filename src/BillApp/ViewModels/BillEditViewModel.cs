@@ -124,7 +124,9 @@ public partial class BillEditViewModel : ViewModelBase
             Categories = new ObservableCollection<Category>(categories);
 
             // Load payees
-            var payees = await _payeeRepository.GetAllAsync();
+            var payees = (await _payeeRepository.GetAllAsync())
+                .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             Payees = new ObservableCollection<Payee>(payees);
 
             // Load payment methods (None, Cash, then active payment accounts)
