@@ -50,11 +50,20 @@ public class BillRepository : RepositoryBase<Bill>, IBillRepository
         return Task.FromResult(bills);
     }
 
-    public Task<IEnumerable<Bill>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    public Task<IEnumerable<Bill>> GetByDueDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         var bills = Collection.Find(b =>
             b.DueDate >= startDate &&
             b.DueDate <= endDate);
         return Task.FromResult(bills);
     }
+
+    public Task<IEnumerable<Bill>> GetByPaidDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        var bills = Collection.Find(b =>
+            b.PaidDate.HasValue &&
+            b.PaidDate.Value >= startDate &&
+            b.PaidDate.Value <= endDate);
+        return Task.FromResult(bills);
+	}
 }

@@ -98,7 +98,7 @@ public partial class PaidBillsByCategoryReportViewModel : ViewModelBase
         try
         {
             // Get all bills in the date range that are paid
-            var allBills = await _billRepository.GetByDateRangeAsync(StartDate, EndDate);
+            var allBills = await _billRepository.GetByPaidDateRangeAsync(StartDate, EndDate);
             var paidBills = allBills.Where(b => b.Status == PaymentStatus.Paid).ToList();
 
             // Get all payees and categories

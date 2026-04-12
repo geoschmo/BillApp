@@ -13,5 +13,7 @@ public interface IBillRepository : IRepository<Bill>
     Task<IEnumerable<Bill>> GetByPaymentAccountAsync(Guid paymentAccountId);
     Task<IEnumerable<Bill>> GetUpcomingAsync(int days);
     Task<IEnumerable<Bill>> GetOverdueAsync();
-    Task<IEnumerable<Bill>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<IEnumerable<Bill>> GetByDueDateRangeAsync(DateTime startDate, DateTime endDate);
+
+    Task<IEnumerable<Bill>> GetByPaidDateRangeAsync(DateTime startDate, DateTime endDate);
 }
