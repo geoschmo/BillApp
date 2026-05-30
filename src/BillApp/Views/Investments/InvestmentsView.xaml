@@ -24,6 +24,13 @@
                          Padding="8,6"
                          Margin="0,0,0,12"/>
 
+                <TextBlock Text="Effective Date"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,4"/>
+                <DatePicker SelectedDate="{Binding EffectiveDate}"
+                            Padding="8,6"
+                            Margin="0,0,0,12"/>
+
                 <TextBlock Text="Paste raw investment text"
                            FontWeight="SemiBold"
                            Margin="0,0,0,4"/>
@@ -77,15 +84,22 @@
         </GroupBox>
 
         <GroupBox Header="Preview holdings" Grid.Row="1" Margin="0,16,0,0">
-            <StackPanel>
-                <TextBlock Text="{Binding TotalValue, StringFormat='Total value: {0:C2}'}"
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="{Binding TotalValue, StringFormat='Total value: {0:C2}'}"
                            FontWeight="SemiBold"
                            Margin="0,0,0,10"/>
-                <DataGrid ItemsSource="{Binding PreviewHoldings}"
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding PreviewHoldings}"
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
-                          MaxHeight="340"
+                          MinHeight="120"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Account"
@@ -101,11 +115,23 @@
                                             Binding="{Binding Price, StringFormat={}{0:C2}}"/>
                         <DataGridTextColumn Header="Market Value"
                                             Binding="{Binding MarketValue, StringFormat={}{0:C2}}"/>
-                        <DataGridTextColumn Header="Asset Class"
-                                            Binding="{Binding AssetClass}"/>
+                        <DataGridTemplateColumn Header="Asset Class">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding AssetClass}" Padding="4,0"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{Binding DataContext.AssetClassOptions, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                              SelectedItem="{Binding AssetClass, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              IsDropDownOpen="True"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </StackPanel>
+            </Grid>
         </GroupBox>
 
         <StackPanel Orientation="Horizontal"

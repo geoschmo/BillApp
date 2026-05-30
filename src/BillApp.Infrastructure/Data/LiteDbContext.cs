@@ -1,4 +1,5 @@
 using BillApp.Core.Models;
+using BillApp.Infrastructure;
 using LiteDB;
 
 namespace BillApp.Infrastructure.Data;
@@ -29,11 +30,15 @@ public class LiteDbContext : IDisposable
             .Ignore(x => x.AvailableCredit)
             .Ignore(x => x.IsAsset)
             .Ignore(x => x.IsLiability);
+
+        BsonMapper.Global.Entity<InvestmentSnapshot>()
+            .Ignore(x => x.EffectiveDateForDisplay)
+            .Ignore(x => x.TotalValue);
     }
 
     public LiteDbContext(string? databasePath = null, string? password = null)
     {
-        // Default path: %LocalAppData%\BillApp\billapp.db
+        // Default path is environment-specific. Debug uses BillApp.Dev; Release uses BillApp.
         var dbPath = databasePath ?? GetDefaultDatabasePath();
 
         // Ensure directory exists
@@ -78,10 +83,7 @@ public class LiteDbContext : IDisposable
     /// </summary>
     public static string GetDefaultDatabasePath()
     {
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BillApp",
-            "billapp.db");
+        return AppStoragePaths.DatabasePath;
     }
 
     public void Dispose()

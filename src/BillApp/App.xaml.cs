@@ -56,6 +56,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<ICategoryRepository, CategoryRepository>();
         services.AddTransient<IPayeeRepository, PayeeRepository>();
         services.AddTransient<IInvestmentRepository, InvestmentRepository>();
+        services.AddTransient<IInvestmentAssetClassificationRepository, InvestmentAssetClassificationRepository>();
 
         // Services (singleton = same instance everywhere)
         services.AddSingleton<INavigationService, NavigationService>();

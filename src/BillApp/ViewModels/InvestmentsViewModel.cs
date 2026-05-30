@@ -15,6 +15,7 @@ public partial class InvestmentsViewModel : ViewModelBase
 {
     private readonly IInvestmentImportService _importService;
     private readonly IInvestmentRepository _investmentRepository;
+    private readonly IInvestmentAssetClassificationRepository _assetClassificationRepository;
     private readonly INavigationService _navigationService;
 
     [ObservableProperty]
@@ -28,6 +29,9 @@ public partial class InvestmentsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _sourceName = "Text Import";
+
+    [ObservableProperty]
+    private DateTime? _effectiveDate = DateTime.Today;
 
     [ObservableProperty]
     private ObservableCollection<InvestmentHoldingRow> _previewHoldings = new();
@@ -47,13 +51,28 @@ public partial class InvestmentsViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
+    public IReadOnlyList<string> AssetClassOptions { get; } =
+    [
+        "Equity",
+        "Bond",
+        "Cash",
+        "ETF",
+        "Mutual Fund",
+        "Money Market",
+        "Real Estate",
+        "Commodity",
+        "Other"
+    ];
+
     public InvestmentsViewModel(
         IInvestmentImportService importService,
         IInvestmentRepository investmentRepository,
+        IInvestmentAssetClassificationRepository assetClassificationRepository,
         INavigationService navigationService)
     {
         _importService = importService;
         _investmentRepository = investmentRepository;
+        _assetClassificationRepository = assetClassificationRepository;
         _navigationService = navigationService;
     }
 
@@ -72,6 +91,7 @@ public partial class InvestmentsViewModel : ViewModelBase
         {
             var preview = await _importService.ParseTextAsync(RawText, AccountName, SourceName);
             ApplyPreview(preview);
+            await ApplyKnownAssetClassesAsync();
             SelectedCsvPath = null;
             StatusMessage = $"Parsed {preview.Holdings.Count} holding(s).";
         }
@@ -107,6 +127,7 @@ public partial class InvestmentsViewModel : ViewModelBase
         {
             var preview = await _importService.ParseCsvFileAsync(dialog.FileName, SourceName);
             ApplyPreview(preview);
+            await ApplyKnownAssetClassesAsync();
             StatusMessage = preview.Warnings.Any()
                 ? $"Parsed {preview.Holdings.Count} holding(s) with warnings."
                 : $"Parsed {preview.Holdings.Count} holding(s).";
@@ -136,6 +157,7 @@ public partial class InvestmentsViewModel : ViewModelBase
         {
             var snapshot = new InvestmentSnapshot
             {
+                EffectiveDate = EffectiveDate?.Date ?? DateTime.Today,
                 ImportedAt = DateTime.UtcNow,
                 SourceName = SourceName,
                 Notes = $"Imported {PreviewHoldings.Count} holding(s) from {SourceName}",
@@ -143,6 +165,7 @@ public partial class InvestmentsViewModel : ViewModelBase
             };
 
             await _investmentRepository.InsertAsync(snapshot);
+            await SaveAssetClassMappingsAsync();
             StatusMessage = $"Saved {snapshot.Holdings.Count} holding(s).";
             ClearPreview();
             await ReturnToOverviewAsync();
@@ -173,6 +196,42 @@ public partial class InvestmentsViewModel : ViewModelBase
 
         TotalValue = preview.TotalValue;
         SourceName = preview.SourceName ?? SourceName;
+    }
+
+    private async Task ApplyKnownAssetClassesAsync()
+    {
+        var assetClassesBySymbol = await _assetClassificationRepository.GetAssetClassesBySymbolAsync();
+        foreach (var holding in PreviewHoldings)
+        {
+            if (string.IsNullOrWhiteSpace(holding.Symbol))
+            {
+                continue;
+            }
+
+            if (assetClassesBySymbol.TryGetValue(NormalizeSymbol(holding.Symbol), out var assetClass))
+            {
+                holding.AssetClass = assetClass;
+            }
+        }
+    }
+
+    private async Task SaveAssetClassMappingsAsync()
+    {
+        var mappings = PreviewHoldings
+            .Where(holding => !string.IsNullOrWhiteSpace(holding.Symbol) &&
+                              !string.IsNullOrWhiteSpace(holding.AssetClass))
+            .GroupBy(holding => NormalizeSymbol(holding.Symbol!))
+            .Select(group => group.First());
+
+        foreach (var mapping in mappings)
+        {
+            await _assetClassificationRepository.UpsertAsync(mapping.Symbol!, mapping.AssetClass!);
+        }
+    }
+
+    private static string NormalizeSymbol(string symbol)
+    {
+        return symbol.Trim().ToUpperInvariant();
     }
 
     private void ClearPreview()

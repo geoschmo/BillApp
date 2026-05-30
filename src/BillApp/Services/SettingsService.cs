@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using BillApp.Infrastructure;
 using BillApp.Settings;
 
 namespace BillApp.Services;
@@ -16,11 +17,8 @@ public class SettingsService : ISettingsService
 
     public SettingsService()
     {
-        // Store settings in AppData/Local/BillApp
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var billAppFolder = Path.Combine(appDataPath, "BillApp");
-        Directory.CreateDirectory(billAppFolder);
-        _settingsPath = Path.Combine(billAppFolder, "settings.json");
+        Directory.CreateDirectory(AppStoragePaths.LocalAppDataFolder);
+        _settingsPath = AppStoragePaths.SettingsPath;
 
         _jsonOptions = new JsonSerializerOptions
         {

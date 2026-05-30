@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows;
 using BillApp.Core.Interfaces.Repositories;
 using BillApp.Core.Models;
 using BillApp.Services;
@@ -120,6 +121,37 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         await _navigationService.NavigateToAsync<InvestmentsViewModel>();
     }
 
+    [RelayCommand(CanExecute = nameof(CanDeleteSelectedSnapshot))]
+    public async Task DeleteSelectedSnapshotAsync()
+    {
+        if (SelectedSnapshot == null)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"Delete snapshot effective {SelectedSnapshot.EffectiveDateForDisplay:d} imported {SelectedSnapshot.ImportedAt:g} with {SelectedSnapshot.Holdings.Count} holding(s)?\n\nThis cannot be undone.",
+            "Delete Investment Snapshot",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            await _investmentRepository.DeleteAsync(SelectedSnapshot.Id);
+            StatusMessage = "Snapshot deleted.";
+            await LoadSnapshotsAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Unable to delete snapshot: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     public async Task AddHoldingAsync()
     {
@@ -149,6 +181,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
 
         var snapshot = new InvestmentSnapshot
         {
+            EffectiveDate = DateTime.Today,
             ImportedAt = DateTime.UtcNow,
             SourceName = "Manual Entry",
             Holdings = new List<InvestmentHolding> { holding }
@@ -162,6 +195,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
 
     partial void OnSelectedSnapshotChanged(InvestmentSnapshot? value)
     {
+        DeleteSelectedSnapshotCommand.NotifyCanExecuteChanged();
         SnapshotHoldings.Clear();
 
         if (value == null)
@@ -176,6 +210,11 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         }
 
         SelectedSnapshotTotal = value.TotalValue;
+    }
+
+    private bool CanDeleteSelectedSnapshot()
+    {
+        return SelectedSnapshot != null && !IsLoading;
     }
 
     partial void OnSelectedAccountChanged(InvestmentAccountSummaryRow? value)
@@ -196,6 +235,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
             var previousSnapshot = i + 1 < accountSnapshots.Count ? accountSnapshots[i + 1] : null;
 
             AccountHistory.Add(new InvestmentAccountHistoryRow(
+                accountSnapshot.EffectiveDate,
                 accountSnapshot.ImportedAt,
                 accountSnapshot.SourceName,
                 accountSnapshot.TotalValue,
@@ -223,7 +263,8 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
             .Select(group =>
             {
                 var ordered = group
-                    .OrderByDescending(s => s.ImportedAt)
+                    .OrderByDescending(s => s.EffectiveDate)
+                    .ThenByDescending(s => s.ImportedAt)
                     .ToList();
                 var current = ordered[0];
                 var previous = ordered.Skip(1).FirstOrDefault();
@@ -232,6 +273,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
                     current.AccountName,
                     current.TotalValue,
                     previous?.TotalValue,
+                    current.EffectiveDate,
                     current.ImportedAt,
                     current.SourceName,
                     current.Holdings.Count);
@@ -260,6 +302,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
 
                     return new AccountSnapshotProjection(
                         string.IsNullOrWhiteSpace(displayName) ? "Unassigned" : displayName.Trim(),
+                        snapshot.EffectiveDateForDisplay,
                         snapshot.ImportedAt,
                         snapshot.SourceName,
                         holdings.Sum(h => h.MarketValue),
@@ -267,7 +310,8 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
                 }))
             .Where(snapshot => normalizedAccountName == null ||
                                NormalizeAccountName(snapshot.AccountName) == normalizedAccountName)
-            .OrderByDescending(snapshot => snapshot.ImportedAt);
+            .OrderByDescending(snapshot => snapshot.EffectiveDate)
+            .ThenByDescending(snapshot => snapshot.ImportedAt);
     }
 
     private static string NormalizeAccountName(string? accountName)
@@ -291,6 +335,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
 
     private sealed record AccountSnapshotProjection(
         string AccountName,
+        DateTime EffectiveDate,
         DateTime ImportedAt,
         string? SourceName,
         decimal TotalValue,
@@ -303,6 +348,7 @@ public sealed class InvestmentAccountSummaryRow
         string accountName,
         decimal currentValue,
         decimal? previousValue,
+        DateTime effectiveDate,
         DateTime lastUpdated,
         string? sourceName,
         int holdingsCount)
@@ -310,6 +356,7 @@ public sealed class InvestmentAccountSummaryRow
         AccountName = accountName;
         CurrentValue = currentValue;
         PreviousValue = previousValue;
+        EffectiveDate = effectiveDate;
         LastUpdated = lastUpdated;
         SourceName = sourceName;
         HoldingsCount = holdingsCount;
@@ -327,6 +374,8 @@ public sealed class InvestmentAccountSummaryRow
         ? Change / PreviousValue.Value
         : null;
 
+    public DateTime EffectiveDate { get; }
+
     public DateTime LastUpdated { get; }
 
     public string? SourceName { get; }
@@ -337,18 +386,22 @@ public sealed class InvestmentAccountSummaryRow
 public sealed class InvestmentAccountHistoryRow
 {
     public InvestmentAccountHistoryRow(
+        DateTime effectiveDate,
         DateTime importedAt,
         string? sourceName,
         decimal totalValue,
         decimal? previousValue,
         int holdingsCount)
     {
+        EffectiveDate = effectiveDate;
         ImportedAt = importedAt;
         SourceName = sourceName;
         TotalValue = totalValue;
         PreviousValue = previousValue;
         HoldingsCount = holdingsCount;
     }
+
+    public DateTime EffectiveDate { get; }
 
     public DateTime ImportedAt { get; }
 

@@ -1,5 +1,6 @@
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using BillApp.Infrastructure;
 
 namespace BillApp.Infrastructure.Security;
 
@@ -50,10 +51,7 @@ public class KeyManager
     /// </summary>
     public static string GetDefaultKeyFilePath()
     {
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BillApp",
-            "key.dat");
+        return AppStoragePaths.KeyFilePath;
     }
 
     private string GenerateAndSaveKey()

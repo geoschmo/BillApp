@@ -101,6 +101,9 @@
                                     Binding="{Binding AccountName}"
                                     Width="*"
                                     MinWidth="180"/>
+                <DataGridTextColumn Header="Effective"
+                                    Binding="{Binding EffectiveDate, StringFormat={}{0:d}}"
+                                    Width="100"/>
                 <DataGridTextColumn Header="Current"
                                     Binding="{Binding CurrentValue, StringFormat={}{0:C2}}"
                                     Width="130">
@@ -182,9 +185,9 @@
                           BorderBrush="#E0E0E0"
                           Margin="0,0,8,8">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Imported"
-                                            Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
-                                            Width="140"/>
+                        <DataGridTextColumn Header="Effective"
+                                            Binding="{Binding EffectiveDate, StringFormat={}{0:d}}"
+                                            Width="100"/>
                         <DataGridTextColumn Header="Value"
                                             Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
                                             Width="110"/>
@@ -225,36 +228,57 @@
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <DataGrid Grid.Row="1"
-                          Grid.ColumnSpan="2"
-                          ItemsSource="{Binding Snapshots}"
-                          SelectedItem="{Binding SelectedSnapshot}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                          GridLinesVisibility="Horizontal"
-                          HeadersVisibility="Column"
-                          BorderThickness="1"
-                          BorderBrush="#E0E0E0">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Imported"
-                                            Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
-                                            Width="160"/>
-                        <DataGridTextColumn Header="Source"
-                                            Binding="{Binding SourceName}"
-                                            Width="180"/>
-                        <DataGridTextColumn Header="Notes"
-                                            Binding="{Binding Notes}"
-                                            Width="*"/>
-                        <DataGridTextColumn Header="Holdings"
-                                            Binding="{Binding Holdings.Count}"
-                                            Width="90"/>
-                        <DataGridTextColumn Header="Total Value"
-                                            Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
-                                            Width="120"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="Snapshots"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="Delete Selected Snapshot"
+                                Command="{Binding DeleteSelectedSnapshotCommand}"
+                                Padding="10,4"
+                                HorizontalAlignment="Right"
+                                Foreground="#C62828"
+                                Cursor="Hand"/>
+                    </DockPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding Snapshots}"
+                              SelectedItem="{Binding SelectedSnapshot}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              BorderThickness="1"
+                              BorderBrush="#E0E0E0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Effective"
+                                                Binding="{Binding EffectiveDateForDisplay, StringFormat={}{0:d}}"
+                                                Width="100"/>
+                            <DataGridTextColumn Header="Imported"
+                                                Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
+                                                Width="160"/>
+                            <DataGridTextColumn Header="Source"
+                                                Binding="{Binding SourceName}"
+                                                Width="180"/>
+                            <DataGridTextColumn Header="Notes"
+                                                Binding="{Binding Notes}"
+                                                Width="*"/>
+                            <DataGridTextColumn Header="Holdings"
+                                                Binding="{Binding Holdings.Count}"
+                                                Width="90"/>
+                            <DataGridTextColumn Header="Total Value"
+                                                Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
+                                                Width="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </Grid>
         </Expander>
     </Grid>

@@ -35,6 +35,13 @@ public class InvestmentHolding
 public class InvestmentSnapshot : EntityBase
 {
     /// <summary>
+    /// Date the snapshot values should be assigned to for reporting and charting.
+    /// </summary>
+    public DateTime? EffectiveDate { get; set; }
+
+    public DateTime EffectiveDateForDisplay => EffectiveDate?.Date ?? ImportedAt.Date;
+
+    /// <summary>
     /// When the user imported this data (local time).
     /// </summary>
     public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
@@ -72,4 +79,14 @@ public class InvestmentImportPreview
     public List<string> Warnings { get; set; } = new();
 
     public decimal TotalValue => Holdings.Sum(h => h.MarketValue);
+}
+
+/// <summary>
+/// User-maintained asset class mapping used to classify future snapshot uploads.
+/// </summary>
+public class InvestmentAssetClassification : EntityBase
+{
+    public string Symbol { get; set; } = string.Empty;
+
+    public string AssetClass { get; set; } = string.Empty;
 }
