@@ -5,146 +5,257 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:BillApp.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:InvestmentsOverviewViewModel}">
+             d:DataContext="{d:DesignInstance Type=vm:InvestmentsOverviewViewModel}"
+             d:DesignHeight="700"
+             d:DesignWidth="1100">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="2*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <StackPanel>
+        <DockPanel Grid.Row="0" Margin="0,0,0,15">
+            <StackPanel DockPanel.Dock="Left">
                 <TextBlock Text="Investments"
-                           FontSize="22"
-                           FontWeight="SemiBold"/>
-                <TextBlock Text="Current investment snapshots stored in the database."
+                           FontSize="24"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+                <TextBlock Text="Current account totals and changes over time."
                            Margin="0,4,0,0"
                            Foreground="#666666"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
-                <Button Content="Add Data"
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Upload Snapshot"
                         Command="{Binding QuickImportCommand}"
-                        Padding="16,8"
-                        Margin="0,0,8,0"/>
+                        Padding="15,8"
+                        Margin="0,0,10,0"
+                        Background="#0078D4"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"/>
                 <Button Content="Refresh"
                         Command="{Binding LoadSnapshotsCommand}"
-                        Padding="16,8"/>
+                        Padding="15,8"
+                        Cursor="Hand"/>
             </StackPanel>
-        </Grid>
+        </DockPanel>
 
         <Border Grid.Row="1"
-                Margin="0,0,0,16"
-                Padding="12"
-                Background="#F8F8F8"
-                BorderBrush="#DDDDDD"
-                BorderThickness="1"
+                Background="#F5F5F5"
+                Padding="15"
+                Margin="0,0,0,15"
                 CornerRadius="4">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Status"
-                               FontWeight="SemiBold"/>
+                    <TextBlock Text="Status" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding StatusMessage}"
                                Margin="0,4,0,0"
+                               Foreground="#555555"
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Snapshots"
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Snapshots.Count}"
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <TextBlock Text="Accounts" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding AccountSummaries.Count}"
                                Margin="0,4,0,0"
-                               FontSize="18"/>
+                               FontSize="20"
+                               HorizontalAlignment="Right"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Selected Total"
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding SelectedSnapshotTotal, StringFormat={}{0:C2}}"
+                <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                    <TextBlock Text="Current Total" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding TotalCurrentValue, StringFormat={}{0:C2}}"
                                Margin="0,4,0,0"
-                               FontSize="18"/>
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Right"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <GroupBox Grid.Row="2" Header="Snapshots" Margin="0,0,0,16">
-            <DataGrid ItemsSource="{Binding Snapshots}"
-                      SelectedItem="{Binding SelectedSnapshot}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      Margin="0,8,0,0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Imported"
-                                        Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
-                                        Width="160"/>
-                    <DataGridTextColumn Header="Source"
-                                        Binding="{Binding SourceName}"
-                                        Width="180"/>
-                    <DataGridTextColumn Header="Notes"
-                                        Binding="{Binding Notes}"
-                                        Width="2*"/>
-                    <DataGridTextColumn Header="Holdings"
-                                        Binding="{Binding Holdings.Count}"
-                                        Width="90"/>
-                    <DataGridTextColumn Header="Total Value"
-                                        Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
-                                        Width="120"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </GroupBox>
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding AccountSummaries}"
+                  SelectedItem="{Binding SelectedAccount}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  BorderThickness="1"
+                  BorderBrush="#E0E0E0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Account"
+                                    Binding="{Binding AccountName}"
+                                    Width="*"
+                                    MinWidth="180"/>
+                <DataGridTextColumn Header="Current"
+                                    Binding="{Binding CurrentValue, StringFormat={}{0:C2}}"
+                                    Width="130">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Previous"
+                                    Binding="{Binding PreviousValue, StringFormat={}{0:C2}}"
+                                    Width="130">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Change"
+                                    Binding="{Binding Change, StringFormat={}{0:C2}}"
+                                    Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Change %"
+                                    Binding="{Binding ChangePercent, StringFormat={}{0:P2}}"
+                                    Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="5,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
 
-        <GroupBox Grid.Row="3" Header="Holdings In Selected Snapshot">
-            <DataGrid ItemsSource="{Binding SnapshotHoldings}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      Margin="0,8,0,0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Account"
-                                        Binding="{Binding AccountName}"
-                                        Width="170"/>
-                    <DataGridTextColumn Header="Symbol"
-                                        Binding="{Binding Symbol}"
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Description"
-                                        Binding="{Binding Description}"
-                                        Width="2*"/>
-                    <DataGridTextColumn Header="Quantity"
-                                        Binding="{Binding Quantity, StringFormat={}{0:N4}}"
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Price"
-                                        Binding="{Binding Price, StringFormat={}{0:C2}}"
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Market Value"
-                                        Binding="{Binding MarketValue, StringFormat={}{0:C2}}"
-                                        Width="120"/>
-                    <DataGridTextColumn Header="Asset Class"
-                                        Binding="{Binding AssetClass}"
-                                        Width="140"/>
-                    <DataGridTextColumn Header="% Account"
-                                        Binding="{Binding PercentOfAccount, StringFormat={}{0:P2}}"
-                                        Width="100"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </GroupBox>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E3F2FD"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <Expander Grid.Row="3"
+                  Header="Snapshot and selected account details"
+                  IsExpanded="False"
+                  Margin="0,15,0,0">
+            <Grid Margin="0,10,0,0" MaxHeight="320">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+
+                <DataGrid Grid.Row="0"
+                          Grid.Column="0"
+                          ItemsSource="{Binding AccountHistory}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          BorderThickness="1"
+                          BorderBrush="#E0E0E0"
+                          Margin="0,0,8,8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Imported"
+                                            Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
+                                            Width="140"/>
+                        <DataGridTextColumn Header="Value"
+                                            Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
+                                            Width="110"/>
+                        <DataGridTextColumn Header="Change"
+                                            Binding="{Binding Change, StringFormat={}{0:C2}}"
+                                            Width="100"/>
+                        <DataGridTextColumn Header="%"
+                                            Binding="{Binding ChangePercent, StringFormat={}{0:P2}}"
+                                            Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <DataGrid Grid.Row="0"
+                          Grid.Column="1"
+                          ItemsSource="{Binding CurrentAccountHoldings}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          BorderThickness="1"
+                          BorderBrush="#E0E0E0"
+                          Margin="0,0,0,8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Symbol"
+                                            Binding="{Binding Symbol}"
+                                            Width="80"/>
+                        <DataGridTextColumn Header="Description"
+                                            Binding="{Binding Description}"
+                                            Width="*"/>
+                        <DataGridTextColumn Header="Market Value"
+                                            Binding="{Binding MarketValue, StringFormat={}{0:C2}}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="Asset Class"
+                                            Binding="{Binding AssetClass}"
+                                            Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <DataGrid Grid.Row="1"
+                          Grid.ColumnSpan="2"
+                          ItemsSource="{Binding Snapshots}"
+                          SelectedItem="{Binding SelectedSnapshot}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          BorderThickness="1"
+                          BorderBrush="#E0E0E0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Imported"
+                                            Binding="{Binding ImportedAt, StringFormat={}{0:g}}"
+                                            Width="160"/>
+                        <DataGridTextColumn Header="Source"
+                                            Binding="{Binding SourceName}"
+                                            Width="180"/>
+                        <DataGridTextColumn Header="Notes"
+                                            Binding="{Binding Notes}"
+                                            Width="*"/>
+                        <DataGridTextColumn Header="Holdings"
+                                            Binding="{Binding Holdings.Count}"
+                                            Width="90"/>
+                        <DataGridTextColumn Header="Total Value"
+                                            Binding="{Binding TotalValue, StringFormat={}{0:C2}}"
+                                            Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Expander>
     </Grid>
 </UserControl>

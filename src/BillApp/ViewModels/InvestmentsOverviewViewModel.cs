@@ -16,6 +16,21 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
     private readonly INavigationService _navigationService;
 
     [ObservableProperty]
+    private ObservableCollection<InvestmentAccountSummaryRow> _accountSummaries = new();
+
+    [ObservableProperty]
+    private InvestmentAccountSummaryRow? _selectedAccount;
+
+    [ObservableProperty]
+    private ObservableCollection<InvestmentAccountHistoryRow> _accountHistory = new();
+
+    [ObservableProperty]
+    private ObservableCollection<InvestmentHoldingRow> _currentAccountHoldings = new();
+
+    [ObservableProperty]
+    private decimal _totalCurrentValue;
+
+    [ObservableProperty]
     private ObservableCollection<InvestmentSnapshot> _snapshots = new();
 
     [ObservableProperty]
@@ -75,16 +90,23 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         {
             var snapshots = await _investmentRepository.GetAllOrderedAsync();
             Snapshots = new ObservableCollection<InvestmentSnapshot>(snapshots);
+            BuildAccountSummaries(Snapshots);
+            SelectedAccount = AccountSummaries.FirstOrDefault();
             SelectedSnapshot = Snapshots.FirstOrDefault();
             StatusMessage = Snapshots.Any()
-                ? $"Loaded {Snapshots.Count} snapshot(s)."
+                ? $"Loaded {AccountSummaries.Count} account(s) from {Snapshots.Count} snapshot(s)."
                 : "No investment snapshots were found in the database.";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Unable to load snapshots: {ex.Message}";
             Snapshots.Clear();
+            AccountSummaries.Clear();
+            AccountHistory.Clear();
+            CurrentAccountHoldings.Clear();
+            TotalCurrentValue = 0m;
             SelectedSnapshot = null;
+            SelectedAccount = null;
         }
         finally
         {
@@ -156,6 +178,105 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         SelectedSnapshotTotal = value.TotalValue;
     }
 
+    partial void OnSelectedAccountChanged(InvestmentAccountSummaryRow? value)
+    {
+        AccountHistory.Clear();
+        CurrentAccountHoldings.Clear();
+
+        if (value == null)
+        {
+            return;
+        }
+
+        var accountSnapshots = GetAccountSnapshots(Snapshots, value.AccountName).ToList();
+
+        for (var i = 0; i < accountSnapshots.Count; i++)
+        {
+            var accountSnapshot = accountSnapshots[i];
+            var previousSnapshot = i + 1 < accountSnapshots.Count ? accountSnapshots[i + 1] : null;
+
+            AccountHistory.Add(new InvestmentAccountHistoryRow(
+                accountSnapshot.ImportedAt,
+                accountSnapshot.SourceName,
+                accountSnapshot.TotalValue,
+                previousSnapshot?.TotalValue,
+                accountSnapshot.Holdings.Count));
+        }
+
+        var currentSnapshot = accountSnapshots.FirstOrDefault();
+        if (currentSnapshot == null)
+        {
+            return;
+        }
+
+        foreach (var holding in currentSnapshot.Holdings.OrderByDescending(h => h.MarketValue))
+        {
+            CurrentAccountHoldings.Add(new InvestmentHoldingRow(holding));
+        }
+    }
+
+    private void BuildAccountSummaries(IEnumerable<InvestmentSnapshot> snapshots)
+    {
+        var accountSnapshots = GetAccountSnapshots(snapshots).ToList();
+        var summaries = accountSnapshots
+            .GroupBy(s => NormalizeAccountName(s.AccountName))
+            .Select(group =>
+            {
+                var ordered = group
+                    .OrderByDescending(s => s.ImportedAt)
+                    .ToList();
+                var current = ordered[0];
+                var previous = ordered.Skip(1).FirstOrDefault();
+
+                return new InvestmentAccountSummaryRow(
+                    current.AccountName,
+                    current.TotalValue,
+                    previous?.TotalValue,
+                    current.ImportedAt,
+                    current.SourceName,
+                    current.Holdings.Count);
+            })
+            .OrderByDescending(s => s.CurrentValue);
+
+        AccountSummaries = new ObservableCollection<InvestmentAccountSummaryRow>(summaries);
+        TotalCurrentValue = AccountSummaries.Sum(s => s.CurrentValue);
+    }
+
+    private static IEnumerable<AccountSnapshotProjection> GetAccountSnapshots(
+        IEnumerable<InvestmentSnapshot> snapshots,
+        string? accountName = null)
+    {
+        var normalizedAccountName = accountName == null ? null : NormalizeAccountName(accountName);
+
+        return snapshots
+            .SelectMany(snapshot => snapshot.Holdings
+                .GroupBy(holding => NormalizeAccountName(holding.AccountName))
+                .Select(group =>
+                {
+                    var holdings = group.ToList();
+                    var displayName = holdings
+                        .Select(h => h.AccountName)
+                        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+
+                    return new AccountSnapshotProjection(
+                        string.IsNullOrWhiteSpace(displayName) ? "Unassigned" : displayName.Trim(),
+                        snapshot.ImportedAt,
+                        snapshot.SourceName,
+                        holdings.Sum(h => h.MarketValue),
+                        holdings);
+                }))
+            .Where(snapshot => normalizedAccountName == null ||
+                               NormalizeAccountName(snapshot.AccountName) == normalizedAccountName)
+            .OrderByDescending(snapshot => snapshot.ImportedAt);
+    }
+
+    private static string NormalizeAccountName(string? accountName)
+    {
+        return string.IsNullOrWhiteSpace(accountName)
+            ? "unassigned"
+            : accountName.Trim().ToUpperInvariant();
+    }
+
     private void ClearManualEntry()
     {
         NewAccountName = string.Empty;
@@ -167,4 +288,81 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         NewAssetClass = string.Empty;
         NewPercentOfAccount = null;
     }
+
+    private sealed record AccountSnapshotProjection(
+        string AccountName,
+        DateTime ImportedAt,
+        string? SourceName,
+        decimal TotalValue,
+        List<InvestmentHolding> Holdings);
+}
+
+public sealed class InvestmentAccountSummaryRow
+{
+    public InvestmentAccountSummaryRow(
+        string accountName,
+        decimal currentValue,
+        decimal? previousValue,
+        DateTime lastUpdated,
+        string? sourceName,
+        int holdingsCount)
+    {
+        AccountName = accountName;
+        CurrentValue = currentValue;
+        PreviousValue = previousValue;
+        LastUpdated = lastUpdated;
+        SourceName = sourceName;
+        HoldingsCount = holdingsCount;
+    }
+
+    public string AccountName { get; }
+
+    public decimal CurrentValue { get; }
+
+    public decimal? PreviousValue { get; }
+
+    public decimal Change => PreviousValue.HasValue ? CurrentValue - PreviousValue.Value : 0m;
+
+    public decimal? ChangePercent => PreviousValue is > 0m
+        ? Change / PreviousValue.Value
+        : null;
+
+    public DateTime LastUpdated { get; }
+
+    public string? SourceName { get; }
+
+    public int HoldingsCount { get; }
+}
+
+public sealed class InvestmentAccountHistoryRow
+{
+    public InvestmentAccountHistoryRow(
+        DateTime importedAt,
+        string? sourceName,
+        decimal totalValue,
+        decimal? previousValue,
+        int holdingsCount)
+    {
+        ImportedAt = importedAt;
+        SourceName = sourceName;
+        TotalValue = totalValue;
+        PreviousValue = previousValue;
+        HoldingsCount = holdingsCount;
+    }
+
+    public DateTime ImportedAt { get; }
+
+    public string? SourceName { get; }
+
+    public decimal TotalValue { get; }
+
+    public decimal? PreviousValue { get; }
+
+    public decimal Change => PreviousValue.HasValue ? TotalValue - PreviousValue.Value : 0m;
+
+    public decimal? ChangePercent => PreviousValue is > 0m
+        ? Change / PreviousValue.Value
+        : null;
+
+    public int HoldingsCount { get; }
 }
