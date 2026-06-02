@@ -32,6 +32,9 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
     private decimal _totalCurrentValue;
 
     [ObservableProperty]
+    private ObservableCollection<InvestmentAssetAllocationRow> _assetAllocations = new();
+
+    [ObservableProperty]
     private ObservableCollection<InvestmentSnapshot> _snapshots = new();
 
     [ObservableProperty]
@@ -105,6 +108,7 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
             AccountSummaries.Clear();
             AccountHistory.Clear();
             CurrentAccountHoldings.Clear();
+            AssetAllocations.Clear();
             TotalCurrentValue = 0m;
             SelectedSnapshot = null;
             SelectedAccount = null;
@@ -282,6 +286,44 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
 
         AccountSummaries = new ObservableCollection<InvestmentAccountSummaryRow>(summaries);
         TotalCurrentValue = AccountSummaries.Sum(s => s.CurrentValue);
+        BuildAssetAllocations(accountSnapshots);
+    }
+
+    private void BuildAssetAllocations(IEnumerable<AccountSnapshotProjection> accountSnapshots)
+    {
+        var currentAccountSnapshots = accountSnapshots
+            .GroupBy(s => NormalizeAccountName(s.AccountName))
+            .Select(group => group
+                .OrderByDescending(s => s.EffectiveDate)
+                .ThenByDescending(s => s.ImportedAt)
+                .First())
+            .ToList();
+
+        var totalValue = currentAccountSnapshots.Sum(s => s.TotalValue);
+        if (totalValue <= 0m)
+        {
+            AssetAllocations.Clear();
+            return;
+        }
+
+        var allocations = currentAccountSnapshots
+            .SelectMany(s => s.Holdings)
+            .GroupBy(h => NormalizeAssetClass(h.AssetClass), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var value = group.Sum(h => h.MarketValue);
+
+                return new InvestmentAssetAllocationRow(
+                    group.Key,
+                    value,
+                    value / totalValue);
+            })
+            .Where(row => row.Value > 0m)
+            .OrderByDescending(row => row.Value)
+            .ThenBy(row => row.AssetClass)
+            .ToList();
+
+        AssetAllocations = new ObservableCollection<InvestmentAssetAllocationRow>(allocations);
     }
 
     private static IEnumerable<AccountSnapshotProjection> GetAccountSnapshots(
@@ -319,6 +361,13 @@ public partial class InvestmentsOverviewViewModel : ViewModelBase
         return string.IsNullOrWhiteSpace(accountName)
             ? "unassigned"
             : accountName.Trim().ToUpperInvariant();
+    }
+
+    private static string NormalizeAssetClass(string? assetClass)
+    {
+        return string.IsNullOrWhiteSpace(assetClass)
+            ? "Unclassified"
+            : assetClass.Trim();
     }
 
     private void ClearManualEntry()
@@ -381,6 +430,24 @@ public sealed class InvestmentAccountSummaryRow
     public string? SourceName { get; }
 
     public int HoldingsCount { get; }
+}
+
+public sealed class InvestmentAssetAllocationRow
+{
+    public InvestmentAssetAllocationRow(string assetClass, decimal value, decimal percent)
+    {
+        AssetClass = assetClass;
+        Value = value;
+        Percent = percent;
+    }
+
+    public string AssetClass { get; }
+
+    public decimal Value { get; }
+
+    public decimal Percent { get; }
+
+    public string DisplayText => $"{AssetClass}: {Percent:P1}";
 }
 
 public sealed class InvestmentAccountHistoryRow

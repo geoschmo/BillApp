@@ -54,6 +54,7 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="1.5*"/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
@@ -79,6 +80,25 @@
                                FontSize="20"
                                FontWeight="SemiBold"
                                HorizontalAlignment="Right"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Margin="20,0,0,0">
+                    <TextBlock Text="Asset Balance" FontWeight="SemiBold"/>
+                    <ItemsControl ItemsSource="{Binding AssetAllocations}"
+                                  Margin="0,4,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayText}"
+                                           Margin="0,0,12,4"
+                                           Foreground="#555555"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Grid>
         </Border>
